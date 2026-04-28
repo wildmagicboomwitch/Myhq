@@ -1544,12 +1544,21 @@ html, body {
         <button class="btn btn-primary" id="setupNameNext">Next →</button>
       </div>
       <div class="setup-step" id="setupStep2">
+        <div class="setup-heading">When's your birthday? 🎂</div>
+        <div class="setup-sub">Used to personalise your experience</div>
+        <input type="date" class="setup-input" id="setupBirthdayInput"
+          autocomplete="off" style="text-align:center;font-size:18px;padding:14px;">
+        <div class="setup-sub hint" style="font-size:12px">This stays on your device only</div>
+        <button class="btn btn-primary" id="setupBirthdayNext">Next →</button>
+        <button class="btn btn-secondary" id="setupBirthdaySkip">Skip</button>
+      </div>
+      <div class="setup-step" id="setupStep3">
         <div class="setup-heading">Pick your buddy! 🐾</div>
         <div class="setup-sub">This little friend lives on your home screen</div>
         <div class="mascot-grid" id="mascotGrid"></div>
         <button class="btn btn-primary" id="setupMascotNext">Next →</button>
       </div>
-      <div class="setup-step" id="setupStep3">
+      <div class="setup-step" id="setupStep4">
         <div class="setup-heading">Pick your colors! 🎨</div>
         <div class="setup-sub">You can always change this later</div>
         <div class="theme-grid" id="themeGrid"></div>
@@ -1558,7 +1567,7 @@ html, body {
         </button>
         <button class="btn btn-secondary" id="setupThemeNext">Skip for now →</button>
       </div>
-      <div class="setup-step" id="setupStep4">
+      <div class="setup-step" id="setupStep5">
         <div class="setup-heading">Name your HQ! 🏠</div>
         <div class="setup-sub">What should your space be called?</div>
         <input type="text" class="setup-input" id="setupAppNameInput"
@@ -3056,6 +3065,9 @@ function completeSetup() {
     mascot:      setupData.mascot || 'star',
     theme:       setupData.theme  || (setupProfileId === 'elder' ? 'DEFAULT_ELDER' : 'DEFAULT_YOUNGER'),
     appName,
+    dob:         setupData.dob || null,
+    age:         setupData.age || null,
+    complexity:  setupData.complexity || (setupProfileId === 'elder' ? 'full' : 'simple'),
     setupDone:   true,
   });
 
@@ -3316,12 +3328,24 @@ function bindEvents() {
     if (e.key === 'Enter') document.getElementById('setupNameNext').click();
   });
 
-  document.getElementById('setupMascotNext').addEventListener('click', () => goSetupStep(3));
-  document.getElementById('setupThemeNext').addEventListener('click',  () => goSetupStep(4));
+  document.getElementById('setupBirthdayNext').addEventListener('click', () => {
+    const dob = document.getElementById('setupBirthdayInput').value;
+    if (dob) {
+      setupData.dob = dob;
+      // Auto-set complexity from age
+      const age = Math.floor((Date.now() - new Date(dob)) / (365.25 * 24 * 60 * 60 * 1000));
+      setupData.age = age;
+      setupData.complexity = age >= 9 ? 'full' : 'simple';
+    }
+    goSetupStep(3);
+  });
+  document.getElementById('setupBirthdaySkip').addEventListener('click', () => goSetupStep(3));
+  document.getElementById('setupMascotNext').addEventListener('click', () => goSetupStep(4));
+  document.getElementById('setupThemeNext').addEventListener('click',  () => goSetupStep(5));
   document.getElementById('openThemeEditorSetup').addEventListener('click', () => {
     // Open theme editor in setup context — save goes back to step 4
     ThemeEditor._setupMode = true;
-    ThemeEditor._onSetupSave = () => goSetupStep(4);
+    ThemeEditor._onSetupSave = () => goSetupStep(5);
     // Temporarily set profileId to the profile being set up
     ThemeEditor._profileId = setupProfileId;
     const profile = Profiles.get(setupProfileId);
