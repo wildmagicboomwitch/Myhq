@@ -2871,6 +2871,7 @@ function enterProfile(profileId) {
       showScreen('ParentSetup');
       return;
     }
+    Auth.startSession('parent');
     window.location.href = 'parent/parent.html';
     return;
   }

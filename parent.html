@@ -1786,7 +1786,13 @@ function init() {
   window.goTo = goTo;
 }
 
-document.addEventListener('DOMContentLoaded', init);
+document.addEventListener('DOMContentLoaded', () => {
+  try {
+    init();
+  } catch(e) {
+    document.body.innerHTML = `<div style="padding:24px;color:#f87171;font-family:monospace;font-size:13px;background:#080c18;min-height:100vh;"><h2 style="color:#fbbf24;margin-bottom:16px">Parent HQ — JS Error</h2><pre style="white-space:pre-wrap;word-break:break-all">${e.stack || e.message}</pre></div>`;
+  }
+});
 </script>
 <!-- END SCRIPTS -->
 
