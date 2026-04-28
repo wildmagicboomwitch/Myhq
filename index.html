@@ -1577,21 +1577,20 @@ html, body {
 
       <div class="parent-setup-card">
         <div>
-          <span class="pin-field-label">Parent A PIN (4 digits)</span>
+          <span class="pin-field-label">Your PIN (4 digits)</span>
           <input type="number" class="setup-input pin-input" id="parentPinA"
             placeholder="••••" maxlength="4" autocomplete="off">
         </div>
         <div>
-          <span class="pin-field-label">Parent B PIN (4 digits)</span>
+          <span class="pin-field-label">Second parent PIN (optional)</span>
           <input type="number" class="setup-input pin-input" id="parentPinB"
-            placeholder="••••" maxlength="4" autocomplete="off">
+            placeholder="Leave blank if only one parent" maxlength="4" autocomplete="off">
         </div>
         <div class="pin-error-msg" id="parentPinError"></div>
         <button class="btn btn-primary btn-full" id="saveParentPinsBtn">Save PINs 🔒</button>
         <div class="parent-setup-info">
-          Both PINs are needed to change privacy settings.<br>
-          Either PIN alone can access the Parent Dashboard.<br>
-          PINs must be different from each other.
+          One PIN is enough. Add a second if two parents want separate PINs.<br>
+          Both PINs are needed to change privacy settings.
         </div>
       </div>
 
@@ -2068,7 +2067,7 @@ const AppSetup = {
   isFirstRun()          { return !Store.get('app-initialized', false); },
   markInitialized()     { Store.set('app-initialized', true); Store.set('init-date', new Date().toISOString()); },
   isProfileSetup(pid)   { return Profiles.get(pid)?.setupDone === true; },
-  parentPinsSet()       { return Auth.hasPin('parent-a') && Auth.hasPin('parent-b'); },
+  parentPinsSet()       { return Auth.hasPin('parent-a'); },  // parent-b is optional
 };
 
 /* Expose globals */
@@ -2716,7 +2715,7 @@ const AppSetup = {
   isFirstRun()          { return !Store.get('app-initialized', false); },
   markInitialized()     { Store.set('app-initialized', true); Store.set('init-date', new Date().toISOString()); },
   isProfileSetup(pid)   { return Profiles.get(pid)?.setupDone === true; },
-  parentPinsSet()       { return Auth.hasPin('parent-a') && Auth.hasPin('parent-b'); },
+  parentPinsSet()       { return Auth.hasPin('parent-a'); },  // parent-b is optional
 };
 
 /* Expose globals */
@@ -2954,17 +2953,20 @@ function saveParentPins() {
   const pinB = String(document.getElementById('parentPinB').value).trim();
   const errEl = document.getElementById('parentPinError');
 
-  if (pinA.length !== 4 || pinB.length !== 4) {
-    errEl.textContent = 'Both PINs must be exactly 4 digits';
+  if (pinA.length !== 4) {
+    errEl.textContent = 'Your PIN must be exactly 4 digits';
     return;
   }
-  if (pinA === pinB) {
-    errEl.textContent = 'Parent PINs must be different from each other';
+  if (pinB.length > 0 && pinB.length !== 4) {
+    errEl.textContent = 'Second PIN must be 4 digits (or leave blank)';
     return;
   }
 
   Auth.setPin('parent-a', pinA);
-  Auth.setPin('parent-b', pinB);
+  // Only set parent-b if a second PIN was provided
+  if (pinB.length === 4) {
+    Auth.setPin('parent-b', pinB);
+  }
   AppSetup.markInitialized();
   errEl.textContent = '';
 

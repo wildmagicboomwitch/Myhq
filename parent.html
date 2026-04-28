@@ -404,13 +404,20 @@ body::before {
       <div class="pin-sub">MY HQ PARENT DASHBOARD</div>
     </div>
 
-    <!-- Session duration picker -->
-    <div style="width:100%;max-width:280px;">
-      <div class="dur-label">Stay logged in for</div>
+    <!-- Device question -->
+    <div style="width:100%;max-width:280px;display:flex;flex-direction:column;gap:10px;">
+      <div class="dur-label">Whose device is this?</div>
       <div class="duration-row">
-        <button class="dur-btn" data-mins="5">5 min</button>
-        <button class="dur-btn active" data-mins="10">10 min</button>
-        <button class="dur-btn" data-mins="30">30 min</button>
+        <button class="dur-btn active" data-device="mine" style="flex:1">📱 Mine</button>
+        <button class="dur-btn" data-device="child" style="flex:1">👧 Child's</button>
+      </div>
+      <div id="timeoutRow" style="display:none;flex-direction:column;gap:6px;">
+        <div class="dur-label">Auto log out after</div>
+        <div class="duration-row">
+          <button class="dur-btn" data-mins="5">5 min</button>
+          <button class="dur-btn active" data-mins="10">10 min</button>
+          <button class="dur-btn" data-mins="30">30 min</button>
+        </div>
       </div>
     </div>
 
@@ -1081,7 +1088,7 @@ const AppSetup = {
   isFirstRun()          { return !Store.get('app-initialized', false); },
   markInitialized()     { Store.set('app-initialized', true); Store.set('init-date', new Date().toISOString()); },
   isProfileSetup(pid)   { return Profiles.get(pid)?.setupDone === true; },
-  parentPinsSet()       { return Auth.hasPin('parent-a') && Auth.hasPin('parent-b'); },
+  parentPinsSet()       { return Auth.hasPin('parent-a'); },  // parent-b is optional
 };
 
 /* Expose globals */
@@ -1358,6 +1365,7 @@ window.ThoughtJar  = ThoughtJar;
 
 /* ── STATE ── */
 let sessionMins    = 10;
+let deviceMode     = 'mine';  // 'mine' = no timeout, 'child' = auto-kick
 let sessionTimer   = null;
 let sessionEndAt   = null;
 let pinBuffer      = '';
@@ -1417,9 +1425,19 @@ function goTo(page) {
 
 /* ── SESSION MANAGEMENT ── */
 function startSession(mins) {
-  sessionMins  = mins;
-  sessionEndAt = Date.now() + mins * 60 * 1000;
+  sessionMins = mins;
   clearInterval(sessionTimer);
+  const pill = document.getElementById('sessionPill');
+
+  if (deviceMode === 'mine') {
+    // No timeout on parent's own device
+    pill.textContent = '📱 My device';
+    pill.className   = 'session-pill';
+    return;
+  }
+
+  // Child's device — auto-kick after timeout
+  sessionEndAt = Date.now() + mins * 60 * 1000;
   sessionTimer = setInterval(tickSession, 1000);
   tickSession();
 }
@@ -1450,9 +1468,21 @@ function endSession() {
 
 /* ── DURATION BUTTONS ── */
 function bindDurationBtns() {
-  document.querySelectorAll('.dur-btn').forEach(btn => {
+  // Device buttons
+  document.querySelectorAll('[data-device]').forEach(btn => {
     btn.addEventListener('click', () => {
-      document.querySelectorAll('.dur-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('[data-device]').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      deviceMode = btn.dataset.device;
+      const timeoutRow = document.getElementById('timeoutRow');
+      timeoutRow.style.display = deviceMode === 'child' ? 'flex' : 'none';
+    });
+  });
+
+  // Duration buttons
+  document.querySelectorAll('[data-mins]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('[data-mins]').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
       sessionMins = parseInt(btn.dataset.mins);
     });
@@ -1481,8 +1511,11 @@ function handlePinKey(k) {
 
 function checkPin() {
   // Accept either parent A or parent B PIN
+  // parent-b may not exist in single-parent setup — verifyPin returns true if no PIN set,
+  // so we must check hasPin first before accepting parent-b
   const validA = Auth.verifyPin('parent-a', pinBuffer);
-  const validB = Auth.verifyPin('parent-b', pinBuffer);
+  const hasPinB = Auth.hasPin('parent-b');
+  const validB = hasPinB && Auth.verifyPin('parent-b', pinBuffer);
 
   if (validA || validB) {
     authParent = validA ? 'a' : 'b';
