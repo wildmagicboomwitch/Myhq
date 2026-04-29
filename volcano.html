@@ -464,23 +464,18 @@ function triggerNeedHelp() {
 /* ── INIT ── */
 function init() {
   const session = Auth.getSession();
-  if (!session || !['elder','younger'].includes(session.profileId)) {
-    window.location.href = 'index.html'; return;
-  }
-  profileId  = session.profileId;
+  // Use session profile if valid, otherwise default to simple (7yo) mode
+  profileId  = (session && ['elder','younger'].includes(session.profileId))
+               ? session.profileId : 'elder';
   complexity = profileId === 'elder' ? 'full' : 'simple';
-  Profiles.applyTheme(profileId);
 
-  const profile = Profiles.get(profileId);
+  try { Profiles.applyTheme(profileId); } catch(e) { /* theme failed, use defaults */ }
+
+  const profile = Profiles.get(profileId) || {};
   const mascot  = MYHQ.MASCOTS.find(m => m.id === profile.mascot) || MYHQ.MASCOTS[0];
   document.getElementById('headerMascot').textContent = mascot.emoji;
 
-  // Adjust language slightly for younger
-  if (complexity === 'simple') {
-    document.querySelector('.header-title').textContent = 'How big is this feeling?';
-  } else {
-    document.querySelector('.header-title').textContent = 'How are you feeling right now?';
-  }
+  document.querySelector('.header-title').textContent = 'How big is this feeling?';
 
   // Build appropriate scale
   if (complexity === 'full') {

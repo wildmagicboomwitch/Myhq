@@ -273,8 +273,7 @@ function buildMiniWins() {
 
 function init() {
   const session = Auth.getSession();
-  if (!session || !['elder','younger'].includes(session.profileId)) { window.location.href = 'index.html'; return; }
-  profileId = session.profileId;
+  profileId = (session && ['elder','younger'].includes(session.profileId)) ? session.profileId : 'elder';
   Profiles.applyTheme(profileId);
   allWins = WinJar.getWins(profileId);
   buildContent();
