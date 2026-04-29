@@ -5,711 +5,307 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Parent Dashboard — My HQ</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
-
-<!-- ============================================================
-     STYLES  →  extract to parent.css when ready
-============================================================ -->
 <style id="parent-styles">
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#080c18;--surface:#0d1220;--card:#131929;--card2:#1a2235;--border:rgba(255,255,255,0.07);--accent:#6366f1;--accent2:#34d399;--danger:#f87171;--warning:#fbbf24;--success:#4ade80;--elder:#e94560;--younger:#c084fc;--text:#f1f5f9;--text-muted:#64748b;--radius:18px;--radius-sm:10px;--font-main:'Nunito',sans-serif;--font-disp:'Fredoka One',cursive;}
+html,body{min-height:100vh;font-family:var(--font-main);background:var(--bg);color:var(--text);overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;background:radial-gradient(ellipse 60% 40% at 20% 0%,rgba(99,102,241,.12) 0%,transparent 70%),var(--bg);pointer-events:none;}
+#app{position:relative;z-index:1;max-width:640px;margin:0 auto;}
 
-:root {
-  /* Parent layer has its own distinct palette — slate/indigo, authority feel */
-  --bg:         #080c18;
-  --surface:    #0d1220;
-  --card:       #131929;
-  --card2:      #1a2235;
-  --border:     rgba(255,255,255,0.07);
-  --accent:     #6366f1;   /* indigo */
-  --accent2:    #34d399;   /* green */
-  --danger:     #f87171;
-  --warning:    #fbbf24;
-  --success:    #4ade80;
-  --elder:      #e94560;   /* elder profile color */
-  --younger:    #c084fc;   /* younger profile color */
-  --text:       #f1f5f9;
-  --text-muted: #64748b;
-  --text-dim:   #334155;
-  --radius:     18px;
-  --radius-sm:  10px;
-  --shadow:     0 8px 32px rgba(0,0,0,0.4);
-  --font-main:  'Nunito', sans-serif;
-  --font-disp:  'Fredoka One', cursive;
+.screen{display:none;min-height:100vh;flex-direction:column;}
+.screen.active{display:flex;}
+.hidden{display:none!important;}
 
-  /* Canva placeholder hooks — swap these vars when ready */
-  --canva-bg-image:      none;   /* background image from Canva export */
-  --canva-card-image:    none;   /* card texture */
-  --canva-accent-image:  none;   /* decorative accent graphic */
-}
+/* PIN GATE */
+.pin-gate{align-items:center;justify-content:center;padding:32px 24px;gap:20px;text-align:center;}
+.pin-logo{font-family:var(--font-disp);font-size:42px;color:var(--accent);text-shadow:0 0 40px rgba(99,102,241,.4);}
+.pin-sub{font-size:14px;font-weight:700;color:var(--text-muted);letter-spacing:.06em;}
+.device-row,.timeout-row{display:flex;gap:8px;width:100%;max-width:280px;}
+.dev-btn,.dur-btn{flex:1;background:var(--card);border:2px solid var(--border);border-radius:var(--radius-sm);padding:11px 8px;font-size:13px;font-weight:800;color:var(--text-muted);cursor:pointer;font-family:var(--font-main);transition:all .2s;text-align:center;}
+.dev-btn.active,.dur-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.dur-label{font-size:12px;font-weight:800;color:var(--text-muted);text-transform:uppercase;letter-spacing:.08em;text-align:center;width:100%;}
+.pin-dots{display:flex;gap:14px;justify-content:center;}
+.pin-dot{width:18px;height:18px;border-radius:50%;border:2px solid var(--accent);background:transparent;transition:all .2s;}
+.pin-dot.filled{background:var(--accent);transform:scale(1.15);box-shadow:0 0 8px var(--accent);}
+.pin-dot.error{border-color:var(--danger);background:var(--danger);animation:shake .4s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.pin-keypad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:280px;}
+.pin-key{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px 8px;font-size:22px;font-weight:800;color:var(--text);cursor:pointer;transition:all .15s;font-family:var(--font-main);text-align:center;}
+.pin-key:hover{background:var(--accent);border-color:var(--accent);}
+.pin-key:active{transform:scale(.96);}
+.pin-key.zero{grid-column:2;}
+.pin-key.del{background:rgba(248,113,113,.08);border-color:rgba(248,113,113,.2);color:var(--danger);font-size:18px;}
+.pin-key.del:hover{background:var(--danger);color:#fff;}
+.pin-error{color:var(--danger);font-size:13px;font-weight:800;min-height:18px;}
+.back-btn{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:8px 14px;color:var(--text-muted);font-size:13px;font-weight:800;cursor:pointer;font-family:var(--font-main);transition:all .2s;}
+.back-btn:hover{color:var(--text);border-color:var(--accent);}
 
-html, body {
-  min-height: 100vh;
-  font-family: var(--font-main);
-  background: var(--bg);
-  color: var(--text);
-  overflow-x: hidden;
-}
+/* BOTH PINs */
+.both-wrap{display:flex;flex-direction:column;gap:14px;width:100%;max-width:320px;}
+.both-label{font-size:12px;font-weight:800;color:var(--text-muted);}
+.both-input{background:var(--card);border:2px solid var(--border);border-radius:var(--radius-sm);padding:14px;font-size:20px;font-weight:800;color:var(--text);font-family:var(--font-main);letter-spacing:6px;text-align:center;outline:none;width:100%;transition:border-color .2s;}
+.both-input:focus{border-color:var(--accent);}
+.both-submit{background:var(--accent);border:none;border-radius:var(--radius-sm);padding:14px;font-size:16px;font-weight:900;color:#fff;cursor:pointer;font-family:var(--font-main);width:100%;}
 
-/* ── BACKGROUND ── */
-body::before {
-  content: '';
-  position: fixed; inset: 0; z-index: 0;
-  background:
-    radial-gradient(ellipse 60% 40% at 20% 0%,  rgba(99,102,241,0.12) 0%, transparent 70%),
-    radial-gradient(ellipse 40% 30% at 80% 100%, rgba(52,211,153,0.08) 0%, transparent 70%),
-    var(--bg);
-  /* CANVA HOOK: replace with → background-image: var(--canva-bg-image); */
-  pointer-events: none;
-}
+/* DASHBOARD */
+.dash-header{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:50;background:var(--bg);backdrop-filter:blur(12px);}
+.dash-title{font-family:var(--font-disp);font-size:20px;color:var(--accent);flex:1;}
+.session-pill{display:flex;align-items:center;gap:5px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);border-radius:20px;padding:5px 12px;font-size:12px;font-weight:800;color:var(--accent);}
+.session-pill.expiring{color:var(--warning);border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.08);animation:pulse 1s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
 
-#app { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+/* VIEW + TAB BAR */
+.top-controls{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);background:var(--bg);}
+.vt-toggle{display:flex;background:var(--card);border-radius:20px;padding:3px;gap:2px;}
+.vt-btn{background:transparent;border:none;border-radius:20px;padding:5px 12px;font-size:11px;font-weight:800;color:var(--text-muted);cursor:pointer;font-family:var(--font-main);transition:all .2s;}
+.vt-btn.active{background:var(--accent);color:#fff;}
+.vt-label{font-size:11px;font-weight:800;color:var(--text-muted);}
+.tab-spacer{flex:1;}
 
-/* ── SCREENS ── */
-.screen { display: none; min-height: 100vh; flex-direction: column; }
-.screen.active { display: flex; }
+.dash-tabs{display:flex;border-bottom:1px solid var(--border);}
+.dash-tab{flex:1;background:transparent;border:none;border-bottom:3px solid transparent;padding:11px 8px;font-size:13px;font-weight:800;color:var(--text-muted);cursor:pointer;font-family:var(--font-main);transition:all .2s;}
+.dash-tab.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-badge{background:var(--danger);color:#fff;border-radius:20px;padding:1px 7px;font-size:11px;margin-left:4px;}
+.tab-badge.warn{background:var(--warning);color:#431407;}
 
-/* ── PIN GATE SCREEN ── */
-.pin-gate {
-  align-items: center; justify-content: center;
-  padding: 32px 24px; gap: 24px; text-align: center;
-}
+.dash-body{padding:14px 16px 88px;display:flex;flex-direction:column;gap:16px;}
 
-.pin-logo {
-  font-family: var(--font-disp);
-  font-size: 42px; color: var(--accent);
-  text-shadow: 0 0 40px rgba(99,102,241,0.4);
-  margin-bottom: 4px;
-}
+/* ALERT BANNER */
+.alert-banner{background:linear-gradient(135deg,rgba(248,113,113,.15),rgba(251,146,60,.08));border:2px solid rgba(248,113,113,.35);border-radius:var(--radius);padding:14px 16px;display:none;align-items:center;gap:12px;animation:bannerPulse 2s ease infinite;}
+.alert-banner.show{display:flex;}
+@keyframes bannerPulse{0%,100%{border-color:rgba(248,113,113,.35)}50%{border-color:rgba(248,113,113,.7)}}
+.ab-icon{font-size:24px;flex-shrink:0;}
+.ab-text{flex:1;} .ab-title{font-size:14px;font-weight:900;color:var(--danger);}
+.ab-sub{font-size:12px;font-weight:700;color:var(--text-muted);margin-top:2px;}
+.ab-btn{background:var(--danger);border:none;border-radius:8px;padding:7px 14px;font-size:13px;font-weight:900;color:#fff;cursor:pointer;font-family:var(--font-main);flex-shrink:0;}
 
-.pin-sub {
-  font-size: 14px; font-weight: 700;
-  color: var(--text-muted); letter-spacing: 0.06em;
-}
+/* QUICK STATS */
+.stats-row{display:flex;gap:10px;}
+.stat-card{flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 8px;text-align:center;}
+.stat-num{font-family:var(--font-disp);font-size:24px;color:var(--accent);}
+.stat-label{font-size:9px;font-weight:800;color:var(--text-muted);text-transform:uppercase;margin-top:2px;}
 
-/* Duration selector */
-.duration-row {
-  display: flex; gap: 8px; justify-content: center; width: 100%;
-}
+/* PROFILE CARDS */
+.profiles-row{display:flex;gap:10px;}
+.profile-quick{flex:1;background:var(--card);border:2px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:8px;}
+.profile-quick.elder{--pc:var(--elder);}
+.profile-quick.younger{--pc:var(--younger);}
+.pq-top{display:flex;align-items:center;gap:8px;}
+.pq-mascot{font-size:26px;}
+.pq-name{font-size:14px;font-weight:800;color:var(--pc);}
+.pq-age{font-size:10px;font-weight:700;color:var(--text-muted);}
+.pq-mood{font-size:11px;font-weight:800;padding:3px 8px;border-radius:20px;background:rgba(255,255,255,.06);color:var(--text-muted);align-self:flex-start;}
+.pq-stats{display:flex;gap:6px;}
+.pq-stat{flex:1;background:rgba(255,255,255,.04);border-radius:8px;padding:7px 4px;text-align:center;}
+.pq-stat-num{font-size:15px;font-weight:900;color:var(--pc);}
+.pq-stat-lbl{font-size:9px;font-weight:800;color:var(--text-muted);text-transform:uppercase;}
+.pq-bar-wrap{background:rgba(255,255,255,.06);border-radius:20px;height:5px;overflow:hidden;}
+.pq-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--pc),var(--accent2));transition:width .5s ease;}
+/* Complexity toggle on profile card */
+.pq-cx{display:flex;align-items:center;justify-content:space-between;}
+.pq-cx-lbl{font-size:10px;font-weight:800;color:var(--text-muted);}
+.pq-cx-row{display:flex;background:rgba(255,255,255,.06);border-radius:20px;padding:2px;gap:2px;}
+.pq-cx-btn{background:transparent;border:none;border-radius:20px;padding:3px 8px;font-size:10px;font-weight:800;color:var(--text-muted);cursor:pointer;font-family:var(--font-main);transition:all .2s;}
+.pq-cx-btn.active{background:var(--pc);color:#fff;}
 
-.dur-btn {
-  flex: 1; max-width: 90px;
-  background: var(--card); border: 2px solid var(--border);
-  border-radius: var(--radius-sm); padding: 10px 8px;
-  font-size: 13px; font-weight: 800; color: var(--text-muted);
-  cursor: pointer; font-family: var(--font-main); transition: all 0.2s;
-  text-align: center;
-}
-.dur-btn:hover  { border-color: var(--accent); color: var(--text); }
-.dur-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+/* NAV TILES */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;}
+.section-title{font-family:var(--font-disp);font-size:16px;}
+.nav-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.nav-tile{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;cursor:pointer;transition:all .2s;display:flex;flex-direction:column;gap:6px;text-decoration:none;color:var(--text);position:relative;}
+.nav-tile:hover{border-color:var(--tile-color,var(--accent));transform:translateY(-2px);}
+.nav-tile.wide{grid-column:1/-1;flex-direction:row;align-items:center;gap:14px;}
+.nav-tile.wide .tile-info{flex:1;}
+.tile-emoji{font-size:26px;}
+.tile-title{font-size:14px;font-weight:900;color:var(--tile-color,var(--text));}
+.tile-sub{font-size:11px;font-weight:600;color:var(--text-muted);}
+.tile-badge{position:absolute;top:8px;right:8px;border-radius:20px;padding:2px 7px;font-size:11px;font-weight:900;background:var(--danger);color:#fff;}
+.tile-badge.warn{background:var(--warning);color:#431407;}
 
-.dur-label {
-  font-size: 12px; font-weight: 800; color: var(--text-muted);
-  text-transform: uppercase; letter-spacing: 0.08em;
-  margin-bottom: 6px; text-align: center; width: 100%;
-}
+/* DEEP CLEAN */
+.dc-tile{background:var(--card);border:2px solid rgba(251,146,60,.2);border-radius:var(--radius);padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:all .2s;}
+.dc-tile:hover{border-color:#fb923c;}
+.dc-name{font-size:14px;font-weight:900;color:#fb923c;}
+.dc-sub{font-size:11px;font-weight:600;color:var(--text-muted);margin-top:2px;}
 
-/* PIN dots */
-.pin-dots { display: flex; gap: 14px; justify-content: center; }
-.pin-dot {
-  width: 18px; height: 18px; border-radius: 50%;
-  border: 2px solid var(--accent); background: transparent;
-  transition: all 0.2s;
-}
-.pin-dot.filled { background: var(--accent); transform: scale(1.15); box-shadow: 0 0 8px var(--accent); }
-.pin-dot.error  { border-color: var(--danger); background: var(--danger); animation: shake 0.4s ease; }
+/* ALERTS */
+.alerts-list,.pending-list{display:flex;flex-direction:column;gap:8px;}
+.alert-item{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:all .2s;}
+.alert-item:hover{border-color:var(--accent);}
+.alert-item.unread{border-left:3px solid var(--danger);}
+.a-dot{width:7px;height:7px;border-radius:50%;background:var(--danger);flex-shrink:0;}
+.a-dot.warn{background:var(--warning);}
+.a-dot.info{background:var(--accent);}
+.a-info{flex:1;min-width:0;}
+.a-who{font-size:11px;font-weight:800;color:var(--text-muted);margin-bottom:2px;}
+.a-text{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.a-time{font-size:11px;color:var(--text-muted);flex-shrink:0;}
 
-@keyframes shake {
-  0%,100% { transform: translateX(0); }
-  25%     { transform: translateX(-6px); }
-  75%     { transform: translateX(6px); }
-}
+/* PENDING */
+.pend-card{background:var(--card);border:2px solid rgba(251,191,36,.2);border-radius:var(--radius-sm);padding:12px 14px;display:flex;align-items:center;gap:10px;}
+.pend-emoji{font-size:24px;flex-shrink:0;}
+.pend-name{font-size:13px;font-weight:800;}
+.pend-who{font-size:11px;font-weight:700;margin-top:2px;}
+.pend-who.elder{color:var(--elder);}
+.pend-who.younger{color:var(--younger);}
+.pend-acts{display:flex;gap:6px;flex-shrink:0;}
+.approve-btn{background:var(--success);border:none;border-radius:8px;padding:7px 12px;font-size:12px;font-weight:900;color:#052e16;cursor:pointer;font-family:var(--font-main);}
+.deny-btn{background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.25);border-radius:8px;padding:7px 10px;font-size:12px;font-weight:800;color:var(--danger);cursor:pointer;font-family:var(--font-main);}
 
-/* PIN keypad */
-.pin-keypad {
-  display: grid; grid-template-columns: repeat(3, 1fr);
-  gap: 10px; width: 100%; max-width: 280px;
-}
-
-.pin-key {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 16px 8px;
-  font-size: 22px; font-weight: 800; color: var(--text);
-  cursor: pointer; transition: all 0.15s; font-family: var(--font-main);
-  text-align: center;
-}
-.pin-key:hover  { background: var(--accent); border-color: var(--accent); transform: scale(1.04); }
-.pin-key:active { transform: scale(0.96); }
-.pin-key.zero   { grid-column: 2; }
-.pin-key.del    { background: rgba(248,113,113,0.08); border-color: rgba(248,113,113,0.2); color: var(--danger); font-size: 18px; }
-.pin-key.del:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
-
-.pin-error { color: var(--danger); font-size: 13px; font-weight: 800; min-height: 18px; }
-.pin-which-label { font-size: 13px; font-weight: 800; color: var(--text-muted); }
-
-/* Both PINs flow */
-.both-pins-wrap { display: flex; flex-direction: column; gap: 14px; width: 100%; max-width: 320px; }
-.both-pin-field { display: flex; flex-direction: column; gap: 6px; }
-.both-pin-label { font-size: 12px; font-weight: 800; color: var(--text-muted); }
-.both-pin-input {
-  background: var(--card); border: 2px solid var(--border);
-  border-radius: var(--radius-sm); padding: 14px;
-  font-size: 20px; font-weight: 800; color: var(--text);
-  font-family: var(--font-main); letter-spacing: 6px;
-  text-align: center; outline: none; width: 100%;
-  transition: border-color 0.2s;
-}
-.both-pin-input:focus { border-color: var(--accent); }
-.both-pins-submit {
-  background: var(--accent); border: none; border-radius: var(--radius-sm);
-  padding: 14px; font-size: 16px; font-weight: 900; color: #fff;
-  cursor: pointer; font-family: var(--font-main); transition: all 0.2s; width: 100%;
-}
-.both-pins-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.4); }
-
-/* Session timer pill */
-.session-pill {
-  display: flex; align-items: center; gap: 6px;
-  background: rgba(99,102,241,0.1); border: 1px solid rgba(99,102,241,0.2);
-  border-radius: 20px; padding: 6px 14px;
-  font-size: 12px; font-weight: 800; color: var(--accent);
-}
-.session-pill.expiring { color: var(--warning); border-color: rgba(251,191,36,0.3); background: rgba(251,191,36,0.08); animation: sessionPulse 1s ease infinite; }
-@keyframes sessionPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
-
-/* ── MAIN DASHBOARD ── */
-.dash-header {
-  padding: 16px 20px 12px;
-  display: flex; align-items: center; gap: 12px;
-  border-bottom: 1px solid var(--border);
-  position: sticky; top: 0; z-index: 50;
-  background: var(--bg);
-  backdrop-filter: blur(12px);
-}
-
-.dash-title {
-  font-family: var(--font-disp); font-size: 20px;
-  color: var(--accent); flex: 1;
-}
-
-.dash-back {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: 8px; padding: 7px 12px;
-  color: var(--text-muted); font-size: 13px; font-weight: 800;
-  cursor: pointer; font-family: var(--font-main); transition: all 0.2s;
-}
-.dash-back:hover { color: var(--text); border-color: var(--accent); }
-
-.dash-body { padding: 16px 20px 80px; display: flex; flex-direction: column; gap: 20px; }
-
-/* ── ALERT BANNER (persistent for high-urgency) ── */
-.alert-banner {
-  background: linear-gradient(135deg, rgba(248,113,113,0.15), rgba(251,146,60,0.08));
-  border: 2px solid rgba(248,113,113,0.35);
-  border-radius: var(--radius); padding: 14px 16px;
-  display: none; align-items: center; gap: 12px;
-  animation: bannerPulse 2s ease infinite;
-}
-.alert-banner.show { display: flex; }
-@keyframes bannerPulse { 0%,100%{border-color:rgba(248,113,113,.35)} 50%{border-color:rgba(248,113,113,.7)} }
-.alert-banner-icon { font-size: 24px; flex-shrink: 0; }
-.alert-banner-text { flex: 1; }
-.alert-banner-title { font-size: 14px; font-weight: 900; color: var(--danger); }
-.alert-banner-sub   { font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 2px; }
-.alert-banner-btn {
-  background: var(--danger); border: none; border-radius: 8px;
-  padding: 7px 14px; font-size: 13px; font-weight: 900; color: #fff;
-  cursor: pointer; font-family: var(--font-main); flex-shrink: 0;
-  transition: all 0.2s;
-}
-.alert-banner-btn:hover { transform: scale(1.04); }
-
-/* ── QUICK STATS ROW ── */
-.stats-row { display: flex; gap: 10px; }
-.stat-card {
-  flex: 1; background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 14px 12px; text-align: center;
-  transition: border-color 0.2s;
-}
-.stat-card:hover { border-color: var(--accent); }
-.stat-num   { font-family: var(--font-disp); font-size: 26px; color: var(--accent); }
-.stat-label { font-size: 10px; font-weight: 800; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.06em; }
-
-/* ── PROFILE QUICK VIEW ── */
-.profiles-row { display: flex; gap: 12px; }
-
-.profile-quick {
-  flex: 1; background: var(--card); border: 2px solid var(--border);
-  border-radius: var(--radius); padding: 16px;
-  display: flex; flex-direction: column; gap: 10px;
-  transition: all 0.2s; cursor: pointer;
-}
-.profile-quick.elder   { --pcolor: var(--elder); }
-.profile-quick.younger { --pcolor: var(--younger); }
-.profile-quick:hover   { border-color: var(--pcolor); transform: translateY(-2px); }
-
-.profile-quick-top { display: flex; align-items: center; gap: 10px; }
-.pq-mascot { font-size: 32px; }
-.pq-info   { flex: 1; }
-.pq-name   { font-size: 15px; font-weight: 800; color: var(--pcolor); }
-.pq-label  { font-size: 11px; font-weight: 700; color: var(--text-muted); }
-
-.pq-mood-chip {
-  font-size: 11px; font-weight: 800; padding: 3px 10px;
-  border-radius: 20px; background: rgba(255,255,255,0.06);
-  color: var(--text-muted); width: fit-content;
-}
-
-.pq-stats { display: flex; gap: 8px; }
-.pq-stat {
-  flex: 1; background: rgba(255,255,255,0.04); border-radius: 8px;
-  padding: 8px 6px; text-align: center;
-}
-.pq-stat-num   { font-size: 16px; font-weight: 900; color: var(--pcolor); }
-.pq-stat-label { font-size: 9px; font-weight: 800; color: var(--text-muted); text-transform: uppercase; }
-
-.pq-chore-bar-wrap { background: rgba(255,255,255,0.06); border-radius: 20px; height: 6px; overflow: hidden; }
-.pq-chore-bar { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--pcolor), var(--accent2)); transition: width 0.6s ease; }
-
-/* ── SECTION HEADERS ── */
-.section-hdr {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 10px;
-}
-.section-title { font-family: var(--font-disp); font-size: 17px; color: var(--text); }
-.section-link  { font-size: 12px; font-weight: 800; color: var(--accent); cursor: pointer; background: none; border: none; font-family: var(--font-main); }
-
-/* ── NAV GRID (main navigation tiles) ── */
-.nav-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.nav-tile {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 18px 16px;
-  cursor: pointer; transition: all 0.2s;
-  display: flex; flex-direction: column; gap: 8px;
-  text-decoration: none; color: var(--text);
-  position: relative; overflow: hidden;
-}
-.nav-tile::before {
-  content: '';
-  position: absolute; inset: 0;
-  background: var(--tile-glow, transparent);
-  opacity: 0; transition: opacity 0.3s;
-}
-.nav-tile:hover { border-color: var(--tile-color, var(--accent)); transform: translateY(-2px); }
-.nav-tile:hover::before { opacity: 1; }
-
-.tile-emoji { font-size: 28px; }
-.tile-title { font-size: 14px; font-weight: 900; color: var(--tile-color, var(--text)); }
-.tile-sub   { font-size: 11px; font-weight: 600; color: var(--text-muted); line-height: 1.3; }
-
-.tile-badge {
-  position: absolute; top: 10px; right: 10px;
-  background: var(--danger); color: #fff;
-  border-radius: 20px; padding: 2px 8px;
-  font-size: 11px; font-weight: 900;
-}
-
-.tile-badge.warn { background: var(--warning); color: #431407; }
-.tile-badge.ok   { background: var(--success); color: #052e16; }
-
-/* WIDE TILE */
-.nav-tile.wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 14px; }
-.nav-tile.wide .tile-info { flex: 1; }
-
-/* ── RECENT ALERTS PREVIEW ── */
-.alerts-preview { display: flex; flex-direction: column; gap: 8px; }
-
-.alert-item {
-  background: var(--card); border: 1px solid var(--border);
-  border-radius: var(--radius-sm); padding: 12px 14px;
-  display: flex; align-items: center; gap: 12px;
-  transition: all 0.2s; cursor: pointer;
-}
-.alert-item:hover { border-color: var(--accent); }
-.alert-item.unread { border-left: 3px solid var(--danger); }
-.alert-item.unread.warn { border-left-color: var(--warning); }
-
-.alert-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--danger); flex-shrink: 0;
-}
-.alert-dot.warn { background: var(--warning); }
-.alert-dot.info { background: var(--accent); }
-
-.alert-info { flex: 1; min-width: 0; }
-.alert-who  { font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 2px; }
-.alert-text { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.alert-time { font-size: 11px; color: var(--text-muted); flex-shrink: 0; }
-
-/* ── BOTTOM NAV ── */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
-  width: 100%; max-width: 640px;
-  background: var(--surface); border-top: 1px solid var(--border);
-  display: flex; z-index: 90;
-  padding: 8px 0 max(8px, env(safe-area-inset-bottom));
-}
-.bnav-item {
-  flex: 1; display: flex; flex-direction: column; align-items: center;
-  gap: 3px; padding: 6px 4px; cursor: pointer;
-  text-decoration: none; color: var(--text-muted);
-  border: none; background: none; font-family: var(--font-main); transition: color 0.2s;
-}
-.bnav-item .bn-emoji { font-size: 20px; }
-.bnav-item .bn-label { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
-.bnav-item.active   { color: var(--accent); }
-
-/* ── TOAST ── */
-#toastWrap {
-  position: fixed; bottom: 72px; left: 50%; transform: translateX(-50%);
-  z-index: 9999; display: flex; flex-direction: column;
-  gap: 8px; width: 90%; max-width: 400px; pointer-events: none;
-}
-@keyframes tIn  { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-@keyframes tOut { from{opacity:1} to{opacity:0;transform:translateY(8px)} }
-
-/* ── PUSH NOTIFICATION STUB ── */
-.push-stub {
-  /* Placeholder — wire to Web Push API when PWA ready */
-  /* STUB: window.PushNotifications.send(title, body, urgency) */
-  display: none;
-}
-
-/* ── UTILITIES ── */
-.hidden   { display: none !important; }
-.mt-4     { margin-top: 4px; }
-.mt-12    { margin-top: 12px; }
-.divider  { height: 1px; background: var(--border); margin: 4px 0; }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-}
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:640px;background:var(--surface);border-top:1px solid var(--border);display:flex;z-index:90;padding:8px 0 max(8px,env(safe-area-inset-bottom));}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;cursor:pointer;text-decoration:none;color:var(--text-muted);border:none;background:none;font-family:var(--font-main);transition:color .2s;}
+.bnav-item .bn-emoji{font-size:20px;}.bnav-item .bn-label{font-size:9px;font-weight:800;text-transform:uppercase;}
+.bnav-item.active{color:var(--accent);}
+#tw{position:fixed;bottom:72px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;gap:8px;width:90%;max-width:400px;pointer-events:none;}
+@keyframes tIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{from{opacity:1}to{opacity:0;transform:translateY(8px)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;}}
 </style>
 </head>
 <body>
+<div id="app">
 
-<!-- ============================================================
-     HTML STRUCTURE
-============================================================ -->
-
-<!-- ── SCREEN: PIN GATE ── -->
+<!-- PIN GATE -->
 <div class="screen active" id="screenPin">
-  <div class="pin-gate screen active" id="pinGate">
-
-    <div>
-      <div class="pin-logo">🔒 Parent</div>
-      <div class="pin-sub">MY HQ PARENT DASHBOARD</div>
+<div class="pin-gate screen active">
+  <div><div class="pin-logo">🔒 Parent</div><div class="pin-sub">MY HQ PARENT DASHBOARD</div></div>
+  <div style="width:100%;max-width:280px;display:flex;flex-direction:column;gap:10px;">
+    <div class="dur-label">Whose device is this?</div>
+    <div class="device-row">
+      <button class="dev-btn active" data-device="mine">📱 Mine</button>
+      <button class="dev-btn" data-device="child">👧 Child's</button>
     </div>
-
-    <!-- Device question -->
-    <div style="width:100%;max-width:280px;display:flex;flex-direction:column;gap:10px;">
-      <div class="dur-label">Whose device is this?</div>
-      <div class="duration-row">
-        <button class="dur-btn active" data-device="mine" style="flex:1">📱 Mine</button>
-        <button class="dur-btn" data-device="child" style="flex:1">👧 Child's</button>
-      </div>
-      <div id="timeoutRow" style="display:none;flex-direction:column;gap:6px;">
-        <div class="dur-label">Auto log out after</div>
-        <div class="duration-row">
-          <button class="dur-btn" data-mins="5">5 min</button>
-          <button class="dur-btn active" data-mins="10">10 min</button>
-          <button class="dur-btn" data-mins="30">30 min</button>
-        </div>
+    <div id="timeoutWrap" style="display:none;flex-direction:column;gap:6px;">
+      <div class="dur-label">Auto log out after</div>
+      <div class="timeout-row">
+        <button class="dur-btn" data-mins="5">5 min</button>
+        <button class="dur-btn active" data-mins="10">10 min</button>
+        <button class="dur-btn" data-mins="30">30 min</button>
       </div>
     </div>
-
-    <!-- Which parent label -->
-    <div class="pin-which-label" id="pinWhichLabel">Enter your PIN</div>
-
-    <!-- PIN dots -->
-    <div class="pin-dots">
-      <div class="pin-dot" id="pd0"></div>
-      <div class="pin-dot" id="pd1"></div>
-      <div class="pin-dot" id="pd2"></div>
-      <div class="pin-dot" id="pd3"></div>
-    </div>
-
-    <div class="pin-error" id="pinError"></div>
-
-    <!-- Keypad -->
-    <div class="pin-keypad">
-      <button class="pin-key" data-k="1">1</button>
-      <button class="pin-key" data-k="2">2</button>
-      <button class="pin-key" data-k="3">3</button>
-      <button class="pin-key" data-k="4">4</button>
-      <button class="pin-key" data-k="5">5</button>
-      <button class="pin-key" data-k="6">6</button>
-      <button class="pin-key" data-k="7">7</button>
-      <button class="pin-key" data-k="8">8</button>
-      <button class="pin-key" data-k="9">9</button>
-      <button class="pin-key zero" data-k="0">0</button>
-      <button class="pin-key del"  data-k="del">⌫</button>
-    </div>
-
-    <button class="dash-back" id="pinBackBtn" style="margin-top:8px">← Back to profiles</button>
   </div>
+  <div class="pin-dots">
+    <div class="pin-dot" id="pd0"></div><div class="pin-dot" id="pd1"></div>
+    <div class="pin-dot" id="pd2"></div><div class="pin-dot" id="pd3"></div>
+  </div>
+  <div class="pin-error" id="pinError"></div>
+  <div class="pin-keypad">
+    <button class="pin-key" data-k="1">1</button><button class="pin-key" data-k="2">2</button><button class="pin-key" data-k="3">3</button>
+    <button class="pin-key" data-k="4">4</button><button class="pin-key" data-k="5">5</button><button class="pin-key" data-k="6">6</button>
+    <button class="pin-key" data-k="7">7</button><button class="pin-key" data-k="8">8</button><button class="pin-key" data-k="9">9</button>
+    <button class="pin-key zero" data-k="0">0</button><button class="pin-key del" data-k="del">⌫</button>
+  </div>
+  <button class="back-btn" id="pinBackBtn">← Back to profiles</button>
+</div>
 </div>
 
-
-<!-- ── SCREEN: BOTH PINs (for sensitive actions) ── -->
+<!-- BOTH PINs -->
 <div class="screen" id="screenBothPins">
-  <div class="pin-gate screen active">
-    <div>
-      <div class="pin-logo">🔐 Both Parents</div>
-      <div class="pin-sub" id="bothPinsReason">REQUIRES BOTH PARENT PINS</div>
-    </div>
-
-    <div class="both-pins-wrap">
-      <div class="both-pin-field">
-        <div class="both-pin-label">Parent A PIN</div>
-        <input type="number" class="both-pin-input" id="bothPinA" placeholder="••••" maxlength="4" autocomplete="off">
-      </div>
-      <div class="both-pin-field">
-        <div class="both-pin-label">Parent B PIN</div>
-        <input type="number" class="both-pin-input" id="bothPinB" placeholder="••••" maxlength="4" autocomplete="off">
-      </div>
-      <div class="pin-error" id="bothPinError"></div>
-      <button class="both-pins-submit" id="bothPinsSubmit">Confirm Both PINs 🔐</button>
-    </div>
-
-    <button class="dash-back" id="bothPinsBack">← Cancel</button>
+<div class="pin-gate screen active">
+  <div><div class="pin-logo">🔐 Both Parents</div><div class="pin-sub" id="bothReason">REQUIRES BOTH PINS</div></div>
+  <div class="both-wrap">
+    <div><div class="both-label">Parent A PIN</div><input type="number" class="both-input" id="bothA" placeholder="••••" maxlength="4" autocomplete="off"></div>
+    <div><div class="both-label">Parent B PIN</div><input type="number" class="both-input" id="bothB" placeholder="••••" maxlength="4" autocomplete="off"></div>
+    <div class="pin-error" id="bothError"></div>
+    <button class="both-submit" id="bothSubmit">Confirm 🔐</button>
   </div>
+  <button class="back-btn" id="bothBack">← Cancel</button>
+</div>
 </div>
 
-
-<!-- ── SCREEN: MAIN DASHBOARD ── -->
+<!-- DASHBOARD -->
 <div class="screen" id="screenDash">
 
-  <!-- Header -->
   <div class="dash-header">
-    <button class="dash-back" id="dashBackBtn">← Exit</button>
+    <button class="back-btn" id="exitBtn">← Exit</button>
     <div class="dash-title">🔒 Parent HQ</div>
-    <div class="session-pill" id="sessionPill">⏱ 10:00</div>
+    <div class="session-pill" id="sessionPill">📱 My device</div>
   </div>
 
-  <div class="dash-body">
+  <!-- View complexity + tab bar in one row -->
+  <div class="top-controls">
+    <span class="vt-label">View</span>
+    <div class="vt-toggle">
+      <button class="vt-btn active" data-view="simple">Simple</button>
+      <button class="vt-btn" data-view="full">Full</button>
+    </div>
+    <div class="tab-spacer"></div>
+    <div class="dash-tabs" style="border:none;flex:none;">
+      <button class="dash-tab active" data-tab="overview" style="padding:5px 10px;font-size:12px">Overview</button>
+      <button class="dash-tab" data-tab="alerts"   style="padding:5px 10px;font-size:12px">🔔<span id="atBadge" class="tab-badge hidden">0</span></button>
+      <button class="dash-tab" data-tab="pending"  style="padding:5px 10px;font-size:12px">⭐<span id="ptBadge" class="tab-badge warn hidden">0</span></button>
+    </div>
+  </div>
 
-    <!-- Persistent alert banner (high urgency only) -->
+  <!-- OVERVIEW -->
+  <div class="dash-body" id="tabOverview">
     <div class="alert-banner" id="alertBanner">
-      <div class="alert-banner-icon">🌋</div>
-      <div class="alert-banner-text">
-        <div class="alert-banner-title" id="alertBannerTitle">High distress alert</div>
-        <div class="alert-banner-sub"   id="alertBannerSub">Tap to view details</div>
-      </div>
-      <button class="alert-banner-btn" id="alertBannerBtn">View</button>
+      <div class="ab-icon">🌋</div>
+      <div class="ab-text"><div class="ab-title" id="abTitle">Alert</div><div class="ab-sub" id="abSub"></div></div>
+      <button class="ab-btn" id="abBtn">View</button>
     </div>
-
-    <!-- Quick stats -->
     <div class="stats-row">
-      <div class="stat-card">
-        <div class="stat-num" id="statAlerts">0</div>
-        <div class="stat-label">Alerts</div>
+      <div class="stat-card"><div class="stat-num" id="sAlerts">0</div><div class="stat-label">Alerts</div></div>
+      <div class="stat-card"><div class="stat-num" id="sPending">0</div><div class="stat-label">Pending</div></div>
+      <div class="stat-card"><div class="stat-num" id="sChores">0</div><div class="stat-label">Jobs</div></div>
+      <div class="stat-card"><div class="stat-num" id="sStars">0</div><div class="stat-label">Stars</div></div>
+    </div>
+    <div class="profiles-row" id="profileCards"></div>
+
+    <!-- SIMPLE: single manage button -->
+    <div id="simpleView">
+      <div class="nav-tile wide" onclick="location.href='parent-manage.html'" style="--tile-color:#6366f1;cursor:pointer">
+        <span class="tile-emoji" style="font-size:32px">⚙️</span>
+        <div class="tile-info"><div class="tile-title">Manage</div><div class="tile-sub">Chores · Rewards · Routines · Profiles · Settings</div></div>
+        <span style="font-size:20px;color:var(--accent)">→</span>
       </div>
-      <div class="stat-card">
-        <div class="stat-num" id="statPending">0</div>
-        <div class="stat-label">Pending</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num" id="statChoresDone">—</div>
-        <div class="stat-label">Jobs Done</div>
-      </div>
-      <div class="stat-card">
-        <div class="stat-num" id="statPoints">—</div>
-        <div class="stat-label">Stars Today</div>
+      <div class="dc-tile" id="dcSimple" style="margin-top:10px">
+        <span style="font-size:26px">🧹</span>
+        <div><div class="dc-name">Room Clean</div><div class="dc-sub">Send cleaning guide to a girl's dashboard</div></div>
       </div>
     </div>
 
-    <!-- Profile quick view -->
-    <div>
-      <div class="section-hdr">
-        <div class="section-title">Today's Overview</div>
-      </div>
-      <div class="profiles-row">
-
-        <!-- Elder -->
-        <div class="profile-quick elder" id="pqElder">
-          <div class="profile-quick-top">
-            <div class="pq-mascot" id="pqElderMascot">⭐</div>
-            <div class="pq-info">
-              <div class="pq-name" id="pqElderName">—</div>
-              <div class="pq-label">10yo</div>
-            </div>
-          </div>
-          <div class="pq-mood-chip" id="pqElderMood">No check-in yet</div>
-          <div class="pq-stats">
-            <div class="pq-stat">
-              <div class="pq-stat-num" id="pqElderChores">0/0</div>
-              <div class="pq-stat-label">Jobs</div>
-            </div>
-            <div class="pq-stat">
-              <div class="pq-stat-num" id="pqElderPoints">0</div>
-              <div class="pq-stat-label">Stars</div>
-            </div>
-            <div class="pq-stat">
-              <div class="pq-stat-num" id="pqElderVolcano">—</div>
-              <div class="pq-stat-label">Wave</div>
-            </div>
-          </div>
-          <div class="pq-chore-bar-wrap">
-            <div class="pq-chore-bar" id="pqElderBar" style="width:0%"></div>
-          </div>
-        </div>
-
-        <!-- Younger -->
-        <div class="profile-quick younger" id="pqYounger">
-          <div class="profile-quick-top">
-            <div class="pq-mascot" id="pqYoungerMascot">🦄</div>
-            <div class="pq-info">
-              <div class="pq-name" id="pqYoungerName">—</div>
-              <div class="pq-label">7yo</div>
-            </div>
-          </div>
-          <div class="pq-mood-chip" id="pqYoungerMood">No check-in yet</div>
-          <div class="pq-stats">
-            <div class="pq-stat">
-              <div class="pq-stat-num" id="pqYoungerChores">0/0</div>
-              <div class="pq-stat-label">Jobs</div>
-            </div>
-            <div class="pq-stat">
-              <div class="pq-stat-num" id="pqYoungerPoints">0</div>
-              <div class="pq-stat-label">Stars</div>
-            </div>
-            <div class="pq-stat">
-              <div class="pq-stat-num" id="pqYoungerVolcano">—</div>
-              <div class="pq-stat-label">Wave</div>
-            </div>
-          </div>
-          <div class="pq-chore-bar-wrap">
-            <div class="pq-chore-bar" id="pqYoungerBar" style="width:0%"></div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-
-    <!-- Recent alerts preview -->
-    <div>
-      <div class="section-hdr">
-        <div class="section-title">Recent Alerts</div>
-        <button class="section-link" onclick="goTo('parent-alerts.html')">See all →</button>
-      </div>
-      <div class="alerts-preview" id="alertsPreview">
-        <div style="text-align:center;padding:20px;color:var(--text-muted);font-size:13px;font-weight:700;">
-          No alerts 🎉
-        </div>
-      </div>
-    </div>
-
-    <!-- Main nav grid -->
-    <div>
-      <div class="section-hdr">
-        <div class="section-title">Manage</div>
-      </div>
+    <!-- FULL: nav grid -->
+    <div id="fullView" class="hidden">
+      <div class="section-hdr" style="margin-bottom:10px"><div class="section-title">Manage</div></div>
       <div class="nav-grid">
-
-        <a class="nav-tile" href="parent-chores.html"
-           style="--tile-color:#4ade80;--tile-glow:radial-gradient(circle,rgba(74,222,128,0.08),transparent)">
-          <span class="tile-emoji">✅</span>
-          <div class="tile-title">Chore Builder</div>
-          <div class="tile-sub">Set up jobs, points, schedules</div>
-          <span class="tile-badge ok" id="badgeChores">—</span>
-        </a>
-
-        <a class="nav-tile" href="parent-rewards.html"
-           style="--tile-color:#fbbf24;--tile-glow:radial-gradient(circle,rgba(251,191,36,0.08),transparent)">
-          <span class="tile-emoji">⭐</span>
-          <div class="tile-title">Rewards</div>
-          <div class="tile-sub">Store + approve redemptions</div>
-          <span class="tile-badge warn hidden" id="badgeRewards">0</span>
-        </a>
-
-        <a class="nav-tile" href="parent-routines.html"
-           style="--tile-color:#60a5fa;--tile-glow:radial-gradient(circle,rgba(96,165,250,0.08),transparent)">
-          <span class="tile-emoji">🌙</span>
-          <div class="tile-title">Routines</div>
-          <div class="tile-sub">Morning · Bedtime · After school</div>
-        </a>
-
-        <a class="nav-tile" href="parent-profiles.html"
-           style="--tile-color:#a78bfa;--tile-glow:radial-gradient(circle,rgba(167,139,250,0.08),transparent)">
-          <span class="tile-emoji">👧</span>
-          <div class="tile-title">Profiles</div>
-          <div class="tile-sub">Settings · Permissions · Privacy</div>
-        </a>
-
-        <a class="nav-tile wide" href="parent-alerts.html"
-           style="--tile-color:#f87171;--tile-glow:radial-gradient(circle,rgba(248,113,113,0.08),transparent)">
-          <span class="tile-emoji">🔔</span>
-          <div class="tile-info">
-            <div class="tile-title">Alert Center</div>
-            <div class="tile-sub">Volcano · Bully · Distress · Requests</div>
-          </div>
-          <span class="tile-badge hidden" id="badgeAlerts">0</span>
-        </a>
-
-        <a class="nav-tile" href="parent-monitoring.html"
-           style="--tile-color:#34d399;--tile-glow:radial-gradient(circle,rgba(52,211,153,0.08),transparent)">
-          <span class="tile-emoji">📊</span>
-          <div class="tile-title">Monitoring</div>
-          <div class="tile-sub">Mood · Volcano trends · Check-ins</div>
-        </a>
-
-        <a class="nav-tile" href="parent-settings.html"
-           style="--tile-color:#64748b;--tile-glow:radial-gradient(circle,rgba(100,116,139,0.08),transparent)">
-          <span class="tile-emoji">⚙️</span>
-          <div class="tile-title">Settings</div>
-          <div class="tile-sub">Notifications · Privacy · Family</div>
-        </a>
-
-        <!-- Deep clean trigger — special action tile -->
-        <div class="nav-tile wide" id="deepCleanTile"
-           style="--tile-color:#fb923c;--tile-glow:radial-gradient(circle,rgba(251,146,60,0.08),transparent);cursor:pointer;">
+        <a class="nav-tile" href="parent-manage.html#chores"     style="--tile-color:#4ade80"><span class="tile-emoji">✅</span><div class="tile-title">Chores</div><div class="tile-sub">Builder · schedules</div></a>
+        <a class="nav-tile" href="parent-manage.html#rewards"    style="--tile-color:#fbbf24"><span class="tile-emoji">⭐</span><div class="tile-title">Rewards</div><div class="tile-sub">Store · approvals</div><span class="tile-badge warn hidden" id="badgeR">0</span></a>
+        <a class="nav-tile" href="parent-manage.html#routines"   style="--tile-color:#60a5fa"><span class="tile-emoji">🌙</span><div class="tile-title">Routines</div><div class="tile-sub">Morning · Bedtime</div></a>
+        <a class="nav-tile" href="parent-manage.html#monitoring" style="--tile-color:#34d399"><span class="tile-emoji">📊</span><div class="tile-title">Monitoring</div><div class="tile-sub">Moods · Volcano</div></a>
+        <a class="nav-tile" href="parent-manage.html#profiles"   style="--tile-color:#a78bfa"><span class="tile-emoji">👧</span><div class="tile-title">Profiles</div><div class="tile-sub">Settings · Privacy</div></a>
+        <a class="nav-tile" href="parent-manage.html#settings"   style="--tile-color:#64748b"><span class="tile-emoji">⚙️</span><div class="tile-title">Settings</div><div class="tile-sub">Notifications · PINs</div></a>
+        <div class="nav-tile wide dc-tile" id="dcFull" style="border:1px solid var(--border);cursor:pointer">
           <span class="tile-emoji">🧹</span>
-          <div class="tile-info">
-            <div class="tile-title">Room Clean Trigger</div>
-            <div class="tile-sub">Send cleaning guide to a girl's dashboard</div>
-          </div>
+          <div class="tile-info"><div class="tile-title">Room Clean</div><div class="tile-sub">Send to a girl's dashboard</div></div>
         </div>
-
       </div>
     </div>
+  </div>
 
-  </div><!-- /dash-body -->
+  <!-- ALERTS TAB -->
+  <div class="dash-body hidden" id="tabAlerts">
+    <div class="section-hdr"><div class="section-title">Alerts</div><button class="back-btn" style="font-size:12px" id="markAllBtn">Mark all read</button></div>
+    <div class="alerts-list" id="alertsList"></div>
+  </div>
 
-  <!-- Bottom nav -->
+  <!-- PENDING TAB -->
+  <div class="dash-body hidden" id="tabPending">
+    <div class="section-hdr" style="margin-bottom:10px"><div class="section-title">Awaiting Approval</div></div>
+    <div class="pending-list" id="pendingList"></div>
+  </div>
+
   <nav class="bottom-nav">
-    <button class="bnav-item active">
-      <span class="bn-emoji">🏠</span><span class="bn-label">Home</span>
-    </button>
-    <a class="bnav-item" href="parent-alerts.html">
-      <span class="bn-emoji">🔔</span><span class="bn-label">Alerts</span>
-    </a>
-    <a class="bnav-item" href="parent-chores.html">
-      <span class="bn-emoji">✅</span><span class="bn-label">Chores</span>
-    </a>
-    <a class="bnav-item" href="parent-monitoring.html">
-      <span class="bn-emoji">📊</span><span class="bn-label">Monitor</span>
-    </a>
-    <a class="bnav-item" href="parent-settings.html">
-      <span class="bn-emoji">⚙️</span><span class="bn-label">Settings</span>
-    </a>
+    <button class="bnav-item active"><span class="bn-emoji">🏠</span><span class="bn-label">Home</span></button>
+    <a class="bnav-item" href="parent-manage.html#chores"><span class="bn-emoji">✅</span><span class="bn-label">Chores</span></a>
+    <a class="bnav-item" href="parent-manage.html#rewards"><span class="bn-emoji">⭐</span><span class="bn-label">Rewards</span></a>
+    <a class="bnav-item" href="parent-manage.html"><span class="bn-emoji">⚙️</span><span class="bn-label">Manage</span></a>
   </nav>
+</div>
 
-</div><!-- /screenDash -->
-
-<!-- Toast container -->
-<div id="toastWrap"></div>
-
-<!-- Push notification stub (wire to Web Push API when PWA ready) -->
-<div class="push-stub" id="pushStub" aria-hidden="true"></div>
-
-
-<!-- ============================================================
-     SCRIPTS  →  extract to parent.js when ready
-============================================================ -->
+<div id="tw"></div>
+</div>
 <script>
 
 /* ============================================================
@@ -1044,6 +640,19 @@ const WinJar = {
 
 /* --- RESET TOOLKIT --- */
 const ResetToolkit = {
+  getSafeThings(pid) {
+    // Safe/comfort things for Reset Toolkit stage 2
+    return Store.getProfile(pid, 'safe-things', [
+      { id:'teddy',   emoji:'🧸', label:'Soft toy'       },
+      { id:'blanket', emoji:'🛋️',  label:'Cozy blanket'   },
+      { id:'water',   emoji:'💧', label:'Cold water'      },
+      { id:'music',   emoji:'🎵', label:'Calm music'      },
+      { id:'outside', emoji:'🌳', label:'Fresh air'       },
+      { id:'pet',     emoji:'🐱', label:'Pet the cat'     },
+      { id:'quiet',   emoji:'🤫', label:'Quiet room'      },
+      { id:'fidget',  emoji:'🎮', label:'Fidget toy'      },
+    ]);
+  },
   getPersonalTools(pid) {
     return Store.getProfile(pid, 'coping-tools', [
       { id:1, label:'Deep breaths',          emoji:'🫁', active:true  },
@@ -1357,477 +966,215 @@ window.RewardStore = RewardStore;
 window.ThoughtJar  = ThoughtJar;
 
 </script>
-<script id="parent-app-script">
-/* ============================================================
-   PARENT DASHBOARD — APP LOGIC
-   Extracts to: parent.js
-============================================================ */
-
+<script id="parent-script">
 /* ── STATE ── */
-let sessionMins    = 10;
-let deviceMode     = 'mine';  // 'mine' = no timeout, 'child' = auto-kick
-let sessionTimer   = null;
-let sessionEndAt   = null;
-let pinBuffer      = '';
-let authParent     = null;   // 'a' | 'b' | 'both'
-let pendingAction  = null;   // callback for both-PIN protected actions
+let pinBuffer='', deviceMode='mine', sessionMins=10, sessionTimer=null, sessionEndAt=null, authParent=null, pendingCb=null;
+let parentView = Store.get('parent-view','simple');
 
-/* ── PUSH NOTIFICATION STUB ── */
-const PushNotifications = {
-  /* STUB — replace with Web Push API when PWA ready */
-  _log: [],
-
-  send(title, body, urgency = 'normal') {
-    const entry = { title, body, urgency, ts: new Date().toISOString() };
-    this._log.push(entry);
-    console.log(`[PUSH STUB] ${urgency.toUpperCase()}: ${title} — ${body}`);
-    /* WIRE HERE:
-       if ('serviceWorker' in navigator && Notification.permission === 'granted') {
-         navigator.serviceWorker.ready.then(sw => {
-           sw.showNotification(title, { body, badge: '/icon.png', tag: urgency });
-         });
-       }
-    */
-  },
-
-  requestPermission() {
-    /* WIRE HERE:
-       return Notification.requestPermission();
-    */
-    console.log('[PUSH STUB] Permission would be requested here');
-    return Promise.resolve('stub');
-  },
+/* ── PUSH STUB ── */
+window.PushNotifications = {
+  send(t,b,u='normal'){console.log(`[PUSH ${u}] ${t}: ${b}`);}
+  /* WIRE: navigator.serviceWorker.ready.then(sw=>sw.showNotification(t,{body:b})); */
 };
 
-window.PushNotifications = PushNotifications;
-
 /* ── TOAST ── */
-function toast(msg, type = 'info', dur = 3000) {
-  const c = document.getElementById('toastWrap');
-  const cols = { success:'#4ade80', error:'#f87171', warn:'#fbbf24', info:'#6366f1', star:'#fbbf24' };
-  const ics  = { success:'✅', error:'❌', warn:'⚠️', info:'ℹ️', star:'⭐' };
-  const t = document.createElement('div');
-  t.style.cssText = `background:var(--card);color:var(--text);border:2px solid ${cols[type]||cols.info};border-radius:12px;padding:12px 18px;font-size:14px;font-weight:700;box-shadow:0 4px 20px rgba(0,0,0,.3);display:flex;align-items:center;gap:8px;pointer-events:all;animation:tIn .3s ease;width:100%;font-family:var(--font-main);`;
-  t.innerHTML = `<span>${ics[type]||'💬'}</span><span>${msg}</span>`;
-  c.appendChild(t);
-  setTimeout(() => { t.style.animation = 'tOut .3s ease forwards'; setTimeout(() => t.remove(), 300); }, dur);
+function toast(msg,type='info',dur=3000){
+  const c=document.getElementById('tw'),col={success:'#4ade80',error:'#f87171',warn:'#fbbf24',info:'#6366f1'},ic={success:'✅',error:'❌',warn:'⚠️',info:'ℹ️'};
+  const t=document.createElement('div');
+  t.style.cssText=`background:var(--card);color:var(--text);border:2px solid ${col[type]||col.info};border-radius:12px;padding:12px 18px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;pointer-events:all;animation:tIn .3s ease;width:100%;font-family:var(--font-main);`;
+  t.innerHTML=`<span>${ic[type]||'💬'}</span><span>${msg}</span>`;
+  c.appendChild(t);setTimeout(()=>{t.style.animation='tOut .3s ease forwards';setTimeout(()=>t.remove(),300);},dur);
 }
 
-/* ── SCREEN SWITCHING ── */
-function showScreen(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-}
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
 
-function goTo(page) {
-  window.location.href = page;
-}
-
-/* ── SESSION MANAGEMENT ── */
-function startSession(mins) {
-  sessionMins = mins;
+/* ── SESSION ── */
+function startSession(mins){
   clearInterval(sessionTimer);
-  const pill = document.getElementById('sessionPill');
+  const pill=document.getElementById('sessionPill');
+  if(deviceMode==='mine'){pill.textContent='📱 My device';pill.className='session-pill';return;}
+  sessionEndAt=Date.now()+mins*60000;
+  sessionTimer=setInterval(()=>{
+    const rem=sessionEndAt-Date.now();
+    if(rem<=0){clearInterval(sessionTimer);toast('Session expired','warn');endSession();return;}
+    const m=Math.floor(rem/60000),s=Math.floor((rem%60000)/1000);
+    pill.textContent=`⏱ ${m}:${s.toString().padStart(2,'0')}`;
+    pill.className=`session-pill${rem<120000?' expiring':''}`;
+  },1000);
+}
+function endSession(){clearInterval(sessionTimer);showScreen('screenPin');pinBuffer='';updateDots();}
 
-  if (deviceMode === 'mine') {
-    // No timeout on parent's own device
-    pill.textContent = '📱 My device';
-    pill.className   = 'session-pill';
-    return;
-  }
-
-  // Child's device — auto-kick after timeout
-  sessionEndAt = Date.now() + mins * 60 * 1000;
-  sessionTimer = setInterval(tickSession, 1000);
-  tickSession();
+/* ── PIN ── */
+function updateDots(){for(let i=0;i<4;i++){const d=document.getElementById(`pd${i}`);d.classList.toggle('filled',i<pinBuffer.length);d.classList.remove('error');}}
+function handleKey(k){if(k==='del')pinBuffer=pinBuffer.slice(0,-1);else if(pinBuffer.length<4)pinBuffer+=k;updateDots();document.getElementById('pinError').textContent='';if(pinBuffer.length===4)setTimeout(checkPin,150);}
+function checkPin(){
+  const vA=Auth.verifyPin('parent-a',pinBuffer),vB=Auth.hasPin('parent-b')&&Auth.verifyPin('parent-b',pinBuffer);
+  if(vA||vB){authParent=vA?'a':'b';Auth.startSession('parent');startSession(sessionMins);loadDash();showScreen('screenDash');}
+  else{document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('error'));document.getElementById('pinError').textContent='Wrong PIN — try again';setTimeout(()=>{pinBuffer='';updateDots();},1000);}
 }
 
-function tickSession() {
-  const remaining = sessionEndAt - Date.now();
-  if (remaining <= 0) {
-    clearInterval(sessionTimer);
-    toast('Session expired — please log in again', 'warn');
-    endSession();
-    return;
-  }
-  const mins = Math.floor(remaining / 60000);
-  const secs = Math.floor((remaining % 60000) / 1000);
-  const label = `⏱ ${mins}:${secs.toString().padStart(2,'0')}`;
-  const pill  = document.getElementById('sessionPill');
-  pill.textContent = label;
-  pill.className   = `session-pill${remaining < 120000 ? ' expiring' : ''}`;
+/* ── BOTH PINs ── */
+function requireBothPins(reason,cb){document.getElementById('bothReason').textContent=reason.toUpperCase();document.getElementById('bothA').value='';document.getElementById('bothB').value='';document.getElementById('bothError').textContent='';pendingCb=cb;showScreen('screenBothPins');}
+function checkBothPins(){
+  const a=String(document.getElementById('bothA').value).trim(),b=String(document.getElementById('bothB').value).trim();
+  if(!Auth.verifyBothParentPins(a,b)){document.getElementById('bothError').textContent='One or both PINs incorrect';return;}
+  showScreen('screenDash');if(typeof pendingCb==='function'){pendingCb();pendingCb=null;}
 }
 
-function endSession() {
-  clearInterval(sessionTimer);
-  Auth.endSession();
-  showScreen('screenPin');
-  pinBuffer = '';
-  updatePinDots();
+/* ── VIEW TOGGLE ── */
+function setView(v){
+  parentView=v;Store.set('parent-view',v);
+  document.querySelectorAll('.vt-btn').forEach(b=>b.classList.toggle('active',b.dataset.view===v));
+  document.getElementById('simpleView').classList.toggle('hidden',v!=='simple');
+  document.getElementById('fullView').classList.toggle('hidden',v!=='full');
 }
 
-/* ── DURATION BUTTONS ── */
-function bindDurationBtns() {
-  // Device buttons
-  document.querySelectorAll('[data-device]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-device]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      deviceMode = btn.dataset.device;
-      const timeoutRow = document.getElementById('timeoutRow');
-      timeoutRow.style.display = deviceMode === 'child' ? 'flex' : 'none';
-    });
-  });
-
-  // Duration buttons
-  document.querySelectorAll('[data-mins]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('[data-mins]').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      sessionMins = parseInt(btn.dataset.mins);
-    });
-  });
+/* ── TABS ── */
+function switchTab(tab){
+  document.querySelectorAll('.dash-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  document.getElementById('tabOverview').classList.toggle('hidden',tab!=='overview');
+  document.getElementById('tabAlerts').classList.toggle('hidden',tab!=='alerts');
+  document.getElementById('tabPending').classList.toggle('hidden',tab!=='pending');
+  if(tab==='alerts')renderAlerts();
+  if(tab==='pending')renderPending();
 }
 
-/* ── PIN SYSTEM ── */
-function updatePinDots() {
-  for (let i = 0; i < 4; i++) {
-    const dot = document.getElementById(`pd${i}`);
-    dot.classList.toggle('filled', i < pinBuffer.length);
-    dot.classList.remove('error');
-  }
+/* ── COMPLEXITY TOGGLE (per profile) ── */
+function setComplexity(pid,mode){
+  const p=Profiles.get(pid);Profiles.save(pid,{...p,complexity:mode});
+  toast(`${p.displayName||pid} → ${mode==='full'?'Full (10yo)':'Simple (7yo)'}`, 'success');
+  buildProfileCards();
 }
 
-function handlePinKey(k) {
-  if (k === 'del') {
-    pinBuffer = pinBuffer.slice(0, -1);
-  } else if (pinBuffer.length < 4) {
-    pinBuffer += k;
-  }
-  updatePinDots();
-  document.getElementById('pinError').textContent = '';
-  if (pinBuffer.length === 4) setTimeout(checkPin, 150);
-}
+/* ── LOAD ── */
+function loadDash(){buildProfileCards();loadStats();loadAlertBanner();loadBadges();}
 
-function checkPin() {
-  // Accept either parent A or parent B PIN
-  // parent-b may not exist in single-parent setup — verifyPin returns true if no PIN set,
-  // so we must check hasPin first before accepting parent-b
-  const validA = Auth.verifyPin('parent-a', pinBuffer);
-  const hasPinB = Auth.hasPin('parent-b');
-  const validB = hasPinB && Auth.verifyPin('parent-b', pinBuffer);
-
-  if (validA || validB) {
-    authParent = validA ? 'a' : 'b';
-    Auth.startSession('parent');
-    startSession(sessionMins);
-    loadDashboard();
-    showScreen('screenDash');
-  } else {
-    document.querySelectorAll('.pin-dot').forEach(d => d.classList.add('error'));
-    document.getElementById('pinError').textContent = 'Wrong PIN — try again';
-    setTimeout(() => { pinBuffer = ''; updatePinDots(); }, 1000);
-  }
-}
-
-/* ── BOTH PINs FLOW ── */
-function requireBothPins(reason, onSuccess) {
-  document.getElementById('bothPinsReason').textContent = reason.toUpperCase();
-  document.getElementById('bothPinA').value = '';
-  document.getElementById('bothPinB').value = '';
-  document.getElementById('bothPinError').textContent = '';
-  pendingAction = onSuccess;
-  showScreen('screenBothPins');
-}
-
-function checkBothPins() {
-  const pinA = String(document.getElementById('bothPinA').value).trim();
-  const pinB = String(document.getElementById('bothPinB').value).trim();
-  const errEl = document.getElementById('bothPinError');
-
-  if (pinA.length !== 4 || pinB.length !== 4) {
-    errEl.textContent = 'Both PINs must be 4 digits';
-    return;
-  }
-  if (!Auth.verifyBothParentPins(pinA, pinB)) {
-    errEl.textContent = 'One or both PINs are incorrect';
-    return;
-  }
-
-  errEl.textContent = '';
-  showScreen('screenDash');
-
-  if (typeof pendingAction === 'function') {
-    pendingAction();
-    pendingAction = null;
-  }
-}
-
-/* ── LOAD DASHBOARD DATA ── */
-function loadDashboard() {
-  loadProfileCards();
-  loadAlerts();
-  loadStats();
-  checkDeepClean();
-}
-
-function loadProfileCards() {
-  ['elder', 'younger'].forEach(pid => {
-    const profile = Profiles.get(pid);
-    const mascot  = MYHQ.MASCOTS.find(m => m.id === profile.mascot) || MYHQ.MASCOTS[0];
-    const sfx     = pid === 'elder' ? 'Elder' : 'Younger';
-
-    document.getElementById(`pq${sfx}Mascot`).textContent = mascot.emoji;
-    document.getElementById(`pq${sfx}Name`).textContent   = profile.displayName || (pid === 'elder' ? 'Elder' : 'Younger');
-
-    // Mood from today's check-in
-    const checkin  = CheckIn.getToday(pid);
-    const slot     = checkin.morning || checkin.afternoon || checkin.evening;
-    const moodEl   = document.getElementById(`pq${sfx}Mood`);
-    if (slot?.mood) {
-      const mood = MYHQ.MOODS.find(m => m.id === slot.mood);
-      moodEl.textContent = mood ? `${mood.emoji} ${mood.label}` : 'Checked in';
-      moodEl.style.color = mood?.color || 'var(--accent)';
-      moodEl.style.background = (mood?.color || '#a78bfa') + '22';
-    }
-
-    // Chores
-    const allChores  = Chores.getForProfile(pid);
-    const doneChores = Chores.getTodayCompletions(pid);
-    const total      = allChores.filter(c => c.frequency === 'daily' || c.type !== 'bonus').length;
-    const done       = doneChores.length;
-    const pct        = total > 0 ? Math.round(done / total * 100) : 0;
-
-    document.getElementById(`pq${sfx}Chores`).textContent = `${done}/${total}`;
-    document.getElementById(`pq${sfx}Bar`).style.width    = pct + '%';
-
-    // Points
-    document.getElementById(`pq${sfx}Points`).textContent = Points.getBalance(pid);
-
-    // Volcano high-water (from stored data)
-    const volcanoToday = Store.getProfile(pid, `volcano-today-${new Date().toDateString()}`, null);
-    document.getElementById(`pq${sfx}Volcano`).textContent = volcanoToday ? volcanoToday.max : '—';
-  });
-}
-
-function loadStats() {
-  const alerts   = Alerts.getUnread();
-  const pending  = RewardStore.getPending();
-  const allChores = [
-    ...Chores.getTodayCompletions('elder'),
-    ...Chores.getTodayCompletions('younger'),
-  ];
-  const ptsToday = [
-    ...Points.getHistory('elder'),
-    ...Points.getHistory('younger'),
-  ].filter(h => {
-    const today = new Date().toDateString();
-    return new Date(h.date).toDateString() === today && h.type === 'earned';
-  }).reduce((sum, h) => sum + h.amount, 0);
-
-  document.getElementById('statAlerts').textContent   = alerts.length || '0';
-  document.getElementById('statPending').textContent  = pending.length || '0';
-  document.getElementById('statChoresDone').textContent = allChores.length;
-  document.getElementById('statPoints').textContent   = ptsToday || '0';
-
-  // Badge updates
-  const alertBadge = document.getElementById('badgeAlerts');
-  if (alerts.length > 0) {
-    alertBadge.textContent = alerts.length;
-    alertBadge.classList.remove('hidden');
-  }
-
-  const rewardBadge = document.getElementById('badgeRewards');
-  if (pending.length > 0) {
-    rewardBadge.textContent = pending.length;
-    rewardBadge.classList.remove('hidden');
-  }
-
-  const choreCount = Chores.getDefinitions().length;
-  document.getElementById('badgeChores').textContent = choreCount || 'Set up';
-}
-
-function loadAlerts() {
-  const alerts  = Alerts.getAll().slice(0, 5);
-  const preview = document.getElementById('alertsPreview');
-  const banner  = document.getElementById('alertBanner');
-
-  // Check for high-urgency alerts
-  const urgent = Alerts.getUnread().filter(a =>
-    ['volcano-high', 'bully', 'needs-help', 'high-distress'].includes(a.type)
-  );
-
-  if (urgent.length > 0) {
-    const top = urgent[0];
-    const labels = {
-      'volcano-high':   '🌋 High distress alert',
-      'bully':          '🛡️ Bully/hurt feelings reported',
-      'needs-help':     '🆘 Needs help right now',
-      'high-distress':  '💜 High distress flagged',
-    };
-    document.getElementById('alertBannerTitle').textContent = labels[top.type] || 'Alert';
-    document.getElementById('alertBannerSub').textContent   =
-      `${top.profileId === 'elder' ? 'Older girl' : 'Younger girl'} · Just now`;
-    banner.classList.add('show');
-
-    // Push notification stub
-    PushNotifications.send(
-      labels[top.type] || 'Alert from My HQ',
-      `Check the parent dashboard for details`,
-      'urgent'
-    );
-
-    document.getElementById('alertBannerBtn').addEventListener('click', () => {
-      goTo('parent-alerts.html');
-    });
-  }
-
-  if (alerts.length === 0) return;
-
-  preview.innerHTML = '';
-  const TYPE_META = {
-    'volcano-high':   { dot:'danger', label:'Volcano high', icon:'🌋' },
-    'bully':          { dot:'danger', label:'Hurt feelings', icon:'🛡️' },
-    'needs-help':     { dot:'danger', label:'Needs help', icon:'🆘' },
-    'high-distress':  { dot:'warn',   label:'High distress', icon:'💜' },
-    'reward-request': { dot:'info',   label:'Reward request', icon:'⭐' },
-    'urgent-thought': { dot:'warn',   label:'Urgent thought', icon:'💭' },
-    'checkin-distress':{ dot:'warn',  label:'Hard check-in', icon:'😰' },
-  };
-
-  alerts.forEach(alert => {
-    const meta = TYPE_META[alert.type] || { dot:'info', label:alert.type, icon:'🔔' };
-    const who  = alert.profileId === 'elder' ? 'Older girl' : 'Younger girl';
-    const time = formatRelTime(alert.date);
-    const el   = document.createElement('div');
-    el.className = `alert-item${!alert.read ? ' unread' : ''}${meta.dot === 'warn' ? ' warn' : ''}`;
-    el.innerHTML = `
-      <div class="alert-dot ${meta.dot}"></div>
-      <div class="alert-info">
-        <div class="alert-who">${meta.icon} ${who} · ${meta.label}</div>
-        <div class="alert-text">${alert.data?.text || alert.data?.rewardName || 'View details'}</div>
+function buildProfileCards(){
+  const container=document.getElementById('profileCards');container.innerHTML='';
+  ['elder','younger'].forEach(pid=>{
+    const p=Profiles.get(pid),mascot=MYHQ.MASCOTS.find(m=>m.id===p.mascot)||MYHQ.MASCOTS[0];
+    const ci=CheckIn.getToday(pid),slot=ci.morning||ci.afternoon||ci.evening;
+    const mood=slot?.mood?MYHQ.MOODS.find(m=>m.id===slot.mood):null;
+    const allC=Chores.getForProfile(pid).filter(c=>c.frequency==='daily');
+    const doneC=Chores.getTodayCompletions(pid);
+    const pct=allC.length?Math.round(doneC.length/allC.length*100):0;
+    const cx=p.complexity||'simple';
+    const card=document.createElement('div');card.className=`profile-quick ${pid}`;
+    card.innerHTML=`
+      <div class="pq-top"><span class="pq-mascot">${mascot.emoji}</span><div><div class="pq-name">${p.displayName||(pid==='elder'?'Older':'Younger')}</div><div class="pq-age">${pid==='elder'?'Older':'Younger'}</div></div></div>
+      <div class="pq-mood">${mood?mood.emoji+' '+mood.label:'No check-in'}</div>
+      <div class="pq-stats">
+        <div class="pq-stat"><div class="pq-stat-num">${doneC.length}/${allC.length}</div><div class="pq-stat-lbl">Jobs</div></div>
+        <div class="pq-stat"><div class="pq-stat-num">${Points.getBalance(pid)}</div><div class="pq-stat-lbl">Stars</div></div>
       </div>
-      <div class="alert-time">${time}</div>
-    `;
-    el.addEventListener('click', () => {
-      Alerts.markRead(alert.id);
-      goTo('parent-alerts.html');
-    });
-    preview.appendChild(el);
+      <div class="pq-bar-wrap"><div class="pq-bar" style="width:${pct}%"></div></div>
+      <div class="pq-cx">
+        <span class="pq-cx-lbl">Mode</span>
+        <div class="pq-cx-row">
+          <button class="pq-cx-btn${cx==='simple'?' active':''}" data-pid="${pid}" data-cx="simple">Simple</button>
+          <button class="pq-cx-btn${cx==='full'?' active':''}"   data-pid="${pid}" data-cx="full">Full</button>
+        </div>
+      </div>`;
+    card.querySelectorAll('.pq-cx-btn').forEach(b=>b.addEventListener('click',()=>setComplexity(b.dataset.pid,b.dataset.cx)));
+    container.appendChild(card);
   });
 }
 
-/* ── DEEP CLEAN TRIGGER ── */
-function checkDeepClean() {
-  // Check if any deep clean is active
-  const active = Store.get('deep-clean-active', null);
-  const tile   = document.getElementById('deepCleanTile');
-  if (active) {
-    tile.querySelector('.tile-sub').textContent = `Active for ${active.profileId === 'elder' ? 'older girl' : 'younger girl'} · Tap to confirm done`;
-    tile.style.borderColor = 'var(--tile-color)';
-  }
+function loadStats(){
+  document.getElementById('sAlerts').textContent  = Alerts.getUnread().length;
+  document.getElementById('sPending').textContent = getPending().length;
+  document.getElementById('sChores').textContent  = Chores.getTodayCompletions('elder').length+Chores.getTodayCompletions('younger').length;
+  const stars=['elder','younger'].reduce((s,pid)=>s+Points.getHistory(pid).filter(h=>new Date(h.date).toDateString()===new Date().toDateString()&&h.type==='earned').reduce((a,h)=>a+h.amount,0),0);
+  document.getElementById('sStars').textContent = stars||'0';
 }
 
-function triggerDeepClean(profileId) {
-  Store.set('deep-clean-active', {
-    profileId,
-    triggeredAt: new Date().toISOString(),
-    triggeredBy: `parent-${authParent}`,
+function loadAlertBanner(){
+  const urgent=Alerts.getUnread().filter(a=>['volcano-high','bully','needs-help','high-distress'].includes(a.type));
+  const banner=document.getElementById('alertBanner');
+  if(!urgent.length){banner.classList.remove('show');return;}
+  const labels={'volcano-high':'🌋 High distress','bully':'🛡️ Hurt feelings','needs-help':'🆘 Needs help NOW','high-distress':'💜 High distress'};
+  document.getElementById('abTitle').textContent=labels[urgent[0].type]||'Alert';
+  document.getElementById('abSub').textContent=Profiles.get(urgent[0].profileId)?.displayName||urgent[0].profileId;
+  banner.classList.add('show');
+  PushNotifications.send(labels[urgent[0].type],'Check the parent dashboard','urgent');
+}
+
+function loadBadges(){
+  const ac=Alerts.getUnread().length,pc=getPending().length;
+  const atB=document.getElementById('atBadge');atB.textContent=ac;atB.classList.toggle('hidden',ac===0);
+  const ptB=document.getElementById('ptBadge');ptB.textContent=pc;ptB.classList.toggle('hidden',pc===0);
+  const rb=document.getElementById('badgeR');if(rb){rb.textContent=pc;rb.classList.toggle('hidden',pc===0);}
+}
+
+/* ── ALERTS ── */
+const AMETA={'volcano-high':{dot:'danger',icon:'🌋',lbl:'Big feelings'},'bully':{dot:'danger',icon:'🛡️',lbl:'Hurt feelings'},'needs-help':{dot:'danger',icon:'🆘',lbl:'Needs help'},'high-distress':{dot:'warn',icon:'💜',lbl:'High distress'},'reward-request':{dot:'info',icon:'⭐',lbl:'Reward request'},'urgent-thought':{dot:'warn',icon:'💭',lbl:'Urgent thought'},'checkin-distress':{dot:'warn',icon:'😰',lbl:'Hard check-in'},'sensory-flag':{dot:'warn',icon:'📢',lbl:'Sensory'}};
+function renderAlerts(){
+  const list=document.getElementById('alertsList'),alerts=Alerts.getAll().slice(0,20);
+  list.innerHTML='';
+  if(!alerts.length){list.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;font-weight:700;">No alerts 🎉</div>';return;}
+  alerts.forEach(a=>{
+    const m=AMETA[a.type]||{dot:'info',icon:'🔔',lbl:a.type};
+    const pname=Profiles.get(a.profileId)?.displayName||a.profileId;
+    const el=document.createElement('div');el.className=`alert-item${!a.read?' unread':''}`;
+    el.innerHTML=`<div class="a-dot ${m.dot}"></div><div class="a-info"><div class="a-who">${m.icon} ${pname} · ${m.lbl}</div><div class="a-text">${a.data?.text||a.data?.rewardName||a.data?.feelingLevel&&'Level '+a.data.feelingLevel||'View details'}</div></div><div class="a-time">${frel(a.date)}</div>`;
+    el.addEventListener('click',()=>{Alerts.markRead(a.id);el.classList.remove('unread');loadBadges();});
+    list.appendChild(el);
   });
-  // This would trigger a dashboard notification on the kid's profile
-  Store.setProfile(profileId, 'deep-clean-pending', true);
-  toast(`Room clean sent to ${profileId === 'elder' ? 'older girl' : 'younger girl'}! 🧹`, 'success');
-  loadDashboard();
 }
 
-/* ── DEEP CLEAN TILE MODAL (simple choice) ── */
-function openDeepCleanModal() {
-  const active = Store.get('deep-clean-active', null);
-  if (active) {
-    // Confirm completion
-    const confirm = window.confirm(`Mark room clean as done or "good enough"?`);
-    if (confirm) {
-      Store.remove('deep-clean-active');
-      Store.setProfile(active.profileId, 'deep-clean-pending', false);
-      WinJar.addWin(active.profileId, 'Room is clean! 🧹✨', 'chore');
-      Points.add(active.profileId, 20, 'Room clean completed! 🧹', 'clean');
-      toast('Great job! Room clean marked done ✅', 'success');
-      loadDashboard();
-    }
-  } else {
-    // Pick which girl
-    const which = window.confirm('Send room clean to:\n\nOK = Older girl\nCancel = Younger girl');
-    triggerDeepClean(which ? 'elder' : 'younger');
-  }
+/* ── PENDING REWARDS ── */
+function getPending(){const all=[];['elder','younger'].forEach(pid=>Store.getProfile(pid,'redemptions',[]).filter(r=>r.status==='pending').forEach(r=>all.push({...r,pid})));return all;}
+function renderPending(){
+  const list=document.getElementById('pendingList'),pending=getPending();list.innerHTML='';
+  if(!pending.length){list.innerHTML='<div style="text-align:center;padding:24px;color:var(--text-muted);font-size:13px;font-weight:700;">No pending requests 🎉</div>';return;}
+  pending.forEach(r=>{
+    const pname=Profiles.get(r.pid)?.displayName||r.pid,date=new Date(r.date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    const card=document.createElement('div');card.className='pend-card';
+    card.innerHTML=`<span class="pend-emoji">${r.emoji||'⭐'}</span><div style="flex:1"><div class="pend-name">${r.name}</div><div class="pend-who ${r.pid}">${pname} · ${r.cost}⭐ · ${date}</div></div><div class="pend-acts"><button class="approve-btn">✅</button><button class="deny-btn">Deny</button></div>`;
+    card.querySelector('.approve-btn').onclick=()=>{const red=Store.getProfile(r.pid,'redemptions',[]),idx=red.findIndex(x=>x.id==r.id);if(idx>=0){red[idx].status='approved';Store.setProfile(r.pid,'redemptions',red);Points.spend(r.pid,r.cost,`Reward: ${r.name}`);}toast(`Approved! ${r.name} ✅`,'success');loadDash();renderPending();};
+    card.querySelector('.deny-btn').onclick=()=>{const red=Store.getProfile(r.pid,'redemptions',[]),idx=red.findIndex(x=>x.id==r.id);if(idx>=0){red[idx].status='denied';Store.setProfile(r.pid,'redemptions',red);}toast('Denied — stars kept','info');renderPending();loadBadges();};
+    list.appendChild(card);
+  });
 }
 
-/* ── UTILITIES ── */
-function formatRelTime(iso) {
-  const diff = Date.now() - new Date(iso).getTime();
-  if (diff < 60000)   return 'Just now';
-  if (diff < 3600000) return `${Math.floor(diff/60000)}m ago`;
-  if (diff < 86400000) return `${Math.floor(diff/3600000)}h ago`;
-  return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric' });
+/* ── DEEP CLEAN ── */
+function triggerDeepClean(){
+  const which=confirm('Send room clean to:\n\nOK = Older girl\nCancel = Younger girl');
+  const pid=which?'elder':'younger';
+  Store.set('deep-clean-active',{profileId:pid,triggeredAt:new Date().toISOString()});
+  Store.setProfile(pid,'deep-clean-pending',true);
+  toast(`Room clean sent to ${Profiles.get(pid)?.displayName||pid}! 🧹`,'success');
 }
+
+function frel(iso){const d=Date.now()-new Date(iso).getTime();if(d<60000)return'Just now';if(d<3600000)return`${Math.floor(d/60000)}m ago`;if(d<86400000)return`${Math.floor(d/3600000)}h ago`;return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric'});}
 
 /* ── INIT ── */
-function init() {
-  bindDurationBtns();
+function init(){
+  document.querySelectorAll('[data-device]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-device]').forEach(x=>x.classList.remove('active'));b.classList.add('active');deviceMode=b.dataset.device;document.getElementById('timeoutWrap').style.display=deviceMode==='child'?'flex':'none';}));
+  document.querySelectorAll('[data-mins]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-mins]').forEach(x=>x.classList.remove('active'));b.classList.add('active');sessionMins=parseInt(b.dataset.mins);}));
+  document.querySelectorAll('.pin-key').forEach(b=>b.addEventListener('click',()=>handleKey(b.dataset.k)));
+  document.addEventListener('keydown',e=>{if(document.querySelector('.screen.active')?.id!=='screenPin')return;if(e.key>='0'&&e.key<='9')handleKey(e.key);if(e.key==='Backspace')handleKey('del');});
+  document.querySelectorAll('.dash-tab').forEach(t=>t.addEventListener('click',()=>switchTab(t.dataset.tab)));
+  document.querySelectorAll('.vt-btn').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+  setView(parentView);
+  document.getElementById('pinBackBtn').addEventListener('click',()=>window.location.href='../index.html');
+  document.getElementById('exitBtn').addEventListener('click',()=>{endSession();window.location.href='../index.html';});
+  document.getElementById('bothSubmit').addEventListener('click',checkBothPins);
+  document.getElementById('bothBack').addEventListener('click',()=>showScreen('screenDash'));
+  document.getElementById('abBtn').addEventListener('click',()=>switchTab('alerts'));
+  document.getElementById('markAllBtn').addEventListener('click',()=>{Alerts.getAll().forEach(a=>Alerts.markRead(a.id));toast('All read','success');loadBadges();renderAlerts();});
+  document.getElementById('dcSimple').addEventListener('click',triggerDeepClean);
+  document.getElementById('dcFull')?.addEventListener('click',triggerDeepClean);
+  window.requireBothPins=requireBothPins;
 
-  // PIN keypad
-  document.querySelectorAll('.pin-key').forEach(btn => {
-    btn.addEventListener('click', () => handlePinKey(btn.dataset.k));
-  });
-
-  // Keyboard PIN
-  document.addEventListener('keydown', e => {
-    const screen = document.querySelector('.screen.active');
-    if (screen?.id !== 'screenPin') return;
-    if (e.key >= '0' && e.key <= '9') handlePinKey(e.key);
-    if (e.key === 'Backspace')         handlePinKey('del');
-  });
-
-  // Back from PIN
-  document.getElementById('pinBackBtn').addEventListener('click', () => {
-    window.location.href = 'index.html';
-  });
-
-  // Both PINs
-  document.getElementById('bothPinsSubmit').addEventListener('click', checkBothPins);
-  document.getElementById('bothPinsBack').addEventListener('click',   () => showScreen('screenDash'));
-
-  // Dashboard back → end session
-  document.getElementById('dashBackBtn').addEventListener('click', () => {
-    endSession();
-    window.location.href = 'index.html';
-  });
-
-  // Deep clean tile
-  document.getElementById('deepCleanTile').addEventListener('click', openDeepCleanModal);
-
-  // Check if already have valid parent session
-  const session = Auth.getSession();
-  if (session?.profileId === 'parent') {
-    authParent = 'a'; // default — can't know which PIN was used from prior session
-    startSession(sessionMins);
-    loadDashboard();
-    showScreen('screenDash');
-  }
-
-  // Expose both-PIN trigger globally for sub-pages to call
-  window.requireBothPins = requireBothPins;
-  window.goTo = goTo;
+  const session=Auth.getSession();
+  if(session?.profileId==='parent'){startSession(sessionMins);loadDash();showScreen('screenDash');return;}
+  if(!Auth.hasPin('parent-a')){Auth.startSession('parent');startSession(sessionMins);loadDash();showScreen('screenDash');}
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  try {
-    init();
-  } catch(e) {
-    document.body.innerHTML = `<div style="padding:24px;color:#f87171;font-family:monospace;font-size:13px;background:#080c18;min-height:100vh;"><h2 style="color:#fbbf24;margin-bottom:16px">Parent HQ — JS Error</h2><pre style="white-space:pre-wrap;word-break:break-all">${e.stack || e.message}</pre></div>`;
-  }
+document.addEventListener('DOMContentLoaded',()=>{
+  try{init();}catch(e){document.body.innerHTML=`<div style="padding:24px;color:#f87171;font-family:monospace;font-size:13px;background:#080c18;min-height:100vh"><h2 style="color:#fbbf24;margin-bottom:16px">Error</h2><pre>${e.stack||e.message}</pre></div>`;}
 });
 </script>
-<!-- END SCRIPTS -->
-
 </body>
 </html>

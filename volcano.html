@@ -298,14 +298,7 @@ function build5Scale() {
     btn.style.setProperty('--btn-bg',    `rgba(${lvl.rgb},0.15)`);
     btn.dataset.level = lvl.level;
     btn.innerHTML = `<span class="sbtn-emoji">${lvl.emoji}</span><span class="sbtn-label">${lvl.name}</span>`;
-    btn.addEventListener('click', () => {
-      try { selectLevel(lvl, LEVELS_5.length); }
-      catch(e) {
-        document.getElementById('levelName').textContent = 'Error: ' + e.message;
-        document.getElementById('levelDisplay').classList.add('active');
-        console.error(e);
-      }
-    });
+    btn.addEventListener('click', () => selectLevel(lvl, LEVELS_5.length));
     row.appendChild(btn);
   });
 
@@ -336,14 +329,7 @@ function build10Scale() {
       <span class="sbtn10-emoji">${lvl.emoji}</span>
       <span class="sbtn10-label">${lvl.name}</span>
     `;
-    btn.addEventListener('click', () => {
-      try { selectLevel(lvl, LEVELS_10.length); }
-      catch(e) {
-        document.getElementById('levelName').textContent = 'Error: ' + e.message;
-        document.getElementById('levelDisplay').classList.add('active');
-        console.error(e);
-      }
-    });
+    btn.addEventListener('click', () => selectLevel(lvl, LEVELS_10.length));
     (i < 5 ? row1 : row2).appendChild(btn);
   });
 

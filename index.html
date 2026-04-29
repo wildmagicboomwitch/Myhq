@@ -3152,17 +3152,23 @@ function loadTodayChores(profileId) {
 function buildDashGrid(profileId, complexity) {
   const grid  = document.getElementById('dashGrid');
   const tiles = [
-    { emoji:'💜', label:'Feelings',    sub:'How do you feel?',   color:'#a78bfa', href:'feelings-hub.html',     glow:'rgba(167,139,250,0.12)' },
-    { emoji:'📚', label:'School',      sub:'Homework & stuff',   color:'#60a5fa', href:'school.html',       glow:'rgba(96,165,250,0.12)'  },
-    { emoji:'🌈', label:'Reset',       sub:'Big feelings tool',  color:'#f87171', href:'reset-toolkit.html',glow:'rgba(248,113,113,0.12)' },
-    { emoji:'⭐', label:'My Wins',     sub:'See what you did!',  color:'#fbbf24', href:'wins.html',         glow:'rgba(251,191,36,0.12)'  },
-    { emoji:'💭', label:'Thought Jar', sub:'Brain dump',         color:'#34d399', href:'thought-jar.html',  glow:'rgba(52,211,153,0.12)'  },
-    { emoji:'🌙', label:'Dreams',      sub:'Dream log',          color:'#818cf8', href:'dreams.html',       glow:'rgba(129,140,248,0.12)'  },
-    { emoji:'🌿', label:'Fireflies',   sub:'Calm-down game',      color:'#4ade80', href:'firefly.html',      glow:'rgba(74,222,128,0.12)'   },
-    { emoji:'📖', label:'Stickers',    sub:'My trophy collection',  color:'#fbbf24', href:'sticker-book.html', glow:'rgba(251,191,36,0.12)'   },
+    { emoji:'💜', label:'Feelings',    sub:'How do you feel?',    color:'#a78bfa', href:'feelings-hub.html',  glow:'rgba(167,139,250,0.12)' },
+    { emoji:'✅', label:'My Jobs',     sub:'Chores & tasks',      color:'#4ade80', href:'chores.html',        glow:'rgba(74,222,128,0.12)'  },
+    { emoji:'📚', label:'School',      sub:'Homework & stuff',    color:'#60a5fa', href:'school.html',        glow:'rgba(96,165,250,0.12)'  },
+    { emoji:'⭐', label:'My Wins',     sub:'See what you did!',   color:'#fbbf24', href:'wins.html',          glow:'rgba(251,191,36,0.12)'  },
+    { emoji:'🌈', label:'Big Feelings',sub:'Work through it',     color:'#f87171', href:'reset-toolkit.html', glow:'rgba(248,113,113,0.12)' },
+    { emoji:'🌿', label:'Calm Corner', sub:'Games & breathing',   color:'#34d399', href:'calm-corner.html',   glow:'rgba(52,211,153,0.12)'  },
+    { emoji:'📋', label:'My Routines', sub:'Morning & bedtime',   color:'#60a5fa', href:'day-plan.html',      glow:'rgba(96,165,250,0.12)'  },
+    { emoji:'🛍️', label:'Rewards',     sub:'Spend your stars',    color:'#fbbf24', href:'rewards.html',       glow:'rgba(251,191,36,0.12)'  },
+    { emoji:'🏠', label:'Family',      sub:'Shared space',        color:'#f472b6', href:'family.html',        glow:'rgba(244,114,182,0.12)' },
+    { emoji:'💭', label:'Thought Jar', sub:'Brain dump',          color:'#818cf8', href:'thought-jar.html',   glow:'rgba(129,140,248,0.12)' },
+    { emoji:'🌙', label:'Dreams',      sub:'Dream log',           color:'#818cf8', href:'dreams.html',        glow:'rgba(129,140,248,0.12)' },
+    { emoji:'🌿', label:'Fireflies',   sub:'Calm-down game',      color:'#4ade80', href:'firefly.html',       glow:'rgba(74,222,128,0.12)'  },
+    { emoji:'📖', label:'Stickers',    sub:'My trophies',         color:'#fbbf24', href:'sticker-book.html',  glow:'rgba(251,191,36,0.12)'  },
   ];
 
-  const visible = complexity === 'simple' ? tiles.slice(0, 4) : tiles;
+  // Simple mode shows core 8 tiles; full mode shows all 13
+  const visible = complexity === 'simple' ? tiles.slice(0, 8) : tiles;
   grid.innerHTML = '';
 
   visible.forEach(tile => {

@@ -348,6 +348,10 @@ html, body { min-height: 100vh; font-family: var(--font-main); background: var(-
    MY HQ — CORE LIBRARY  (myhq-core.js)
 ============================================================ */
 
+/* ============================================================
+   MY HQ — CORE LIBRARY  (myhq-core.js)
+============================================================ */
+
 const MYHQ = {
   VERSION: '1.0.0',
   PREFIX: 'myhq-',
@@ -676,6 +680,19 @@ const WinJar = {
 
 /* --- RESET TOOLKIT --- */
 const ResetToolkit = {
+  getSafeThings(pid) {
+    // Safe/comfort things for Reset Toolkit stage 2
+    return Store.getProfile(pid, 'safe-things', [
+      { id:'teddy',   emoji:'🧸', label:'Soft toy'       },
+      { id:'blanket', emoji:'🛋️',  label:'Cozy blanket'   },
+      { id:'water',   emoji:'💧', label:'Cold water'      },
+      { id:'music',   emoji:'🎵', label:'Calm music'      },
+      { id:'outside', emoji:'🌳', label:'Fresh air'       },
+      { id:'pet',     emoji:'🐱', label:'Pet the cat'     },
+      { id:'quiet',   emoji:'🤫', label:'Quiet room'      },
+      { id:'fidget',  emoji:'🎮', label:'Fidget toy'      },
+    ]);
+  },
   getPersonalTools(pid) {
     return Store.getProfile(pid, 'coping-tools', [
       { id:1, label:'Deep breaths',          emoji:'🫁', active:true  },
@@ -720,7 +737,7 @@ const AppSetup = {
   isFirstRun()          { return !Store.get('app-initialized', false); },
   markInitialized()     { Store.set('app-initialized', true); Store.set('init-date', new Date().toISOString()); },
   isProfileSetup(pid)   { return Profiles.get(pid)?.setupDone === true; },
-  parentPinsSet()       { return Auth.hasPin('parent-a') && Auth.hasPin('parent-b'); },
+  parentPinsSet()       { return Auth.hasPin('parent-a'); },  // parent-b is optional
 };
 
 /* Expose globals */
@@ -736,6 +753,257 @@ window.Chores       = Chores;
 window.TimeUtil     = TimeUtil;
 window.WinJar       = WinJar;
 window.ResetToolkit = ResetToolkit;
+window.Alerts       = Alerts;
+window.AppSetup     = AppSetup;
+window.isColorDark  = isColorDark;
+
+console.log(`✨ My HQ Core v${MYHQ.VERSION} loaded`);
+
+/* ============================================================
+   SCHOOL DATA LAYER
+============================================================ */
+const School = {
+  SUBJECTS: [
+    { id:'math',    label:'Math',          emoji:'➕', color:'#60a5fa' },
+    { id:'reading', label:'Reading',       emoji:'📖', color:'#a78bfa' },
+    { id:'writing', label:'Writing',       emoji:'✏️',  color:'#f472b6' },
+    { id:'science', label:'Science',       emoji:'🔬', color:'#34d399' },
+    { id:'social',  label:'Social Studies',emoji:'🌎', color:'#fb923c' },
+    { id:'art',     label:'Art',           emoji:'🎨', color:'#e879f9' },
+    { id:'music',   label:'Music',         emoji:'🎵', color:'#fbbf24' },
+    { id:'pe',      label:'PE',            emoji:'🏃', color:'#4ade80' },
+    { id:'other',   label:'Other',         emoji:'📋', color:'#94a3b8' },
+  ],
+
+  getHomework(pid)  { return Store.getProfile(pid, 'homework', []); },
+  getTests(pid)     { return Store.getProfile(pid, 'tests', []); },
+  getProjects(pid)  { return Store.getProfile(pid, 'projects', []); },
+
+  saveHomework(pid, hw) {
+    const all = this.getHomework(pid);
+    const idx = all.findIndex(x => x.id === hw.id);
+    const item = { ...hw, id: hw.id || `hw-${Date.now()}` };
+    if (idx >= 0) all[idx] = item; else all.unshift(item);
+    Store.setProfile(pid, 'homework', all);
+    return item;
+  },
+
+  saveTest(pid, test) {
+    const all = this.getTests(pid);
+    const idx = all.findIndex(x => x.id === test.id);
+    const item = { ...test, id: test.id || `test-${Date.now()}` };
+    if (idx >= 0) all[idx] = item; else all.unshift(item);
+    Store.setProfile(pid, 'tests', all);
+    return item;
+  },
+
+  saveProject(pid, proj) {
+    const all = this.getProjects(pid);
+    const idx = all.findIndex(x => x.id === proj.id);
+    const item = { ...proj, id: proj.id || `proj-${Date.now()}` };
+    if (idx >= 0) all[idx] = item; else all.unshift(item);
+    Store.setProfile(pid, 'projects', all);
+    return item;
+  },
+
+  deleteHomework(pid, id) {
+    Store.setProfile(pid, 'homework', this.getHomework(pid).filter(x => x.id !== id));
+  },
+  deleteTest(pid, id) {
+    Store.setProfile(pid, 'tests', this.getTests(pid).filter(x => x.id !== id));
+  },
+  deleteProject(pid, id) {
+    Store.setProfile(pid, 'projects', this.getProjects(pid).filter(x => x.id !== id));
+  },
+
+  markHomeworkDone(pid, id) {
+    const all = this.getHomework(pid);
+    const idx = all.findIndex(x => x.id === id);
+    if (idx >= 0) {
+      all[idx].done = true;
+      all[idx].doneAt = new Date().toISOString();
+      Store.setProfile(pid, 'homework', all);
+      Points.add(pid, 5, `Homework done: ${all[idx].title}`, 'school');
+      WinJar.addWin(pid, `Finished homework: ${all[idx].title} 📚`, 'school');
+    }
+  },
+
+  getDueToday(pid) {
+    const today = new Date().toDateString();
+    return [
+      ...this.getHomework(pid).filter(x => !x.done && x.dueDate && new Date(x.dueDate).toDateString() === today),
+      ...this.getTests(pid).filter(x => !x.done && x.date && new Date(x.date).toDateString() === today),
+    ];
+  },
+
+  getUpcoming(pid, days = 7) {
+    const cutoff = new Date(Date.now() + days * 86400000);
+    const today  = new Date();
+    const filter = (items, dateKey) => items.filter(x =>
+      !x.done && x[dateKey] && new Date(x[dateKey]) >= today && new Date(x[dateKey]) <= cutoff
+    );
+    return {
+      homework: filter(this.getHomework(pid), 'dueDate'),
+      tests:    filter(this.getTests(pid),    'date'),
+      projects: filter(this.getProjects(pid), 'dueDate'),
+    };
+  },
+
+  subjectById(id) { return this.SUBJECTS.find(s => s.id === id) || this.SUBJECTS[this.SUBJECTS.length - 1]; },
+};
+
+/* ============================================================
+   REWARD STORE DATA LAYER
+============================================================ */
+const RewardStore = {
+  getRewards()     { return Store.get('reward-store', []); },
+  getRedemptions(pid) { return Store.getProfile(pid, 'redemptions', []); },
+
+  saveReward(reward) {
+    const all = this.getRewards();
+    const idx = all.findIndex(r => r.id === reward.id);
+    const item = { ...reward, id: reward.id || `reward-${Date.now()}` };
+    if (idx >= 0) all[idx] = item; else all.push(item);
+    Store.set('reward-store', all);
+    return item;
+  },
+
+  deleteReward(id) {
+    Store.set('reward-store', this.getRewards().filter(r => r.id !== id));
+  },
+
+  requestRedemption(pid, rewardId) {
+    const reward  = this.getRewards().find(r => r.id === rewardId);
+    if (!reward) return false;
+    const balance = Points.getBalance(pid);
+    if (balance < reward.cost) return false;
+
+    const redemption = {
+      id:       `redeem-${Date.now()}`,
+      profileId: pid,
+      rewardId,
+      rewardName: reward.name,
+      cost:     reward.cost,
+      status:   'pending',
+      requestedAt: new Date().toISOString(),
+    };
+
+    // Hold points (deduct immediately, refund if denied)
+    Points.spend(pid, reward.cost, `Reward request: ${reward.name}`);
+
+    // Add to pending
+    const all = Store.get('reward-redemptions', []);
+    all.unshift(redemption);
+    Store.set('reward-redemptions', all.slice(0, 200));
+
+    // Alert parents
+    const alerts = Store.get('parent-alerts', []);
+    alerts.unshift({
+      id: Date.now(), profileId: pid,
+      type: 'reward-request',
+      data: redemption,
+      date: new Date().toISOString(),
+      read: false,
+    });
+    Store.set('parent-alerts', alerts.slice(0, 200));
+
+    return redemption;
+  },
+
+  approveRedemption(redemptionId) {
+    const all = Store.get('reward-redemptions', []);
+    const idx = all.findIndex(r => r.id === redemptionId);
+    if (idx >= 0) {
+      all[idx].status = 'approved';
+      all[idx].approvedAt = new Date().toISOString();
+      Store.set('reward-redemptions', all);
+    }
+  },
+
+  denyRedemption(redemptionId) {
+    const all = Store.get('reward-redemptions', []);
+    const idx = all.findIndex(r => r.id === redemptionId);
+    if (idx >= 0) {
+      const r = all[idx];
+      r.status = 'denied';
+      r.deniedAt = new Date().toISOString();
+      Store.set('reward-redemptions', all);
+      // Refund points
+      Points.add(r.profileId, r.cost, `Refund: ${r.rewardName}`, 'refund');
+    }
+  },
+
+  getPending()  { return Store.get('reward-redemptions', []).filter(r => r.status === 'pending'); },
+  getForProfile(pid) { return Store.get('reward-redemptions', []).filter(r => r.profileId === pid); },
+
+  seedDefaults() {
+    if (this.getRewards().length === 0) {
+      const defaults = [
+        { id:'r1', name:'30 min extra screen time', emoji:'📱', cost:20,  category:'screen'   },
+        { id:'r2', name:'Choose dinner tonight',     emoji:'🍽️',  cost:30,  category:'food'     },
+        { id:'r3', name:'Stay up 15 min late',       emoji:'🌙', cost:25,  category:'bedtime'  },
+        { id:'r4', name:'Movie night pick',          emoji:'🎬', cost:50,  category:'activity' },
+        { id:'r5', name:'Small treat from store',    emoji:'🍬', cost:40,  category:'treat'    },
+        { id:'r6', name:'Skip one chore (once)',     emoji:'🎉', cost:35,  category:'chores'   },
+        { id:'r7', name:'Friend sleepover',          emoji:'🏕️',  cost:100, category:'social'   },
+        { id:'r8', name:'Game time with a parent',   emoji:'🎮', cost:15,  category:'activity' },
+      ];
+      defaults.forEach(d => this.saveReward(d));
+    }
+  },
+};
+
+/* ============================================================
+   THOUGHT JAR DATA LAYER
+============================================================ */
+const ThoughtJar = {
+  TYPES: [
+    { id:'idea',    emoji:'💡', label:'Idea',    color:'#fbbf24' },
+    { id:'feeling', emoji:'💜', label:'Feeling', color:'#a78bfa' },
+    { id:'worry',   emoji:'😰', label:'Worry',   color:'#f87171' },
+    { id:'win',     emoji:'🏆', label:'Win',     color:'#4ade80' },
+    { id:'question',emoji:'❓', label:'Question',color:'#60a5fa' },
+    { id:'vent',    emoji:'🌋', label:'Vent',    color:'#fb923c' },
+  ],
+
+  getEntries(pid) { return Store.getProfile(pid, 'thoughts', []); },
+
+  add(pid, text, type = 'idea', isUrgent = false) {
+    const entries = this.getEntries(pid);
+    const entry = {
+      id:        `thought-${Date.now()}`,
+      text,
+      type,
+      isUrgent,
+      date:      new Date().toISOString(),
+      routed:    false,
+    };
+    entries.unshift(entry);
+    Store.setProfile(pid, 'thoughts', entries.slice(0, 300));
+
+    if (isUrgent) {
+      const alerts = Store.get('parent-alerts', []);
+      alerts.unshift({ id: Date.now(), profileId: pid, type: 'urgent-thought', data: entry, date: new Date().toISOString(), read: false });
+      Store.set('parent-alerts', alerts.slice(0, 200));
+    }
+    return entry;
+  },
+
+  delete(pid, id) {
+    Store.setProfile(pid, 'thoughts', this.getEntries(pid).filter(e => e.id !== id));
+  },
+
+  markRouted(pid, id) {
+    const entries = this.getEntries(pid);
+    const idx = entries.findIndex(e => e.id === id);
+    if (idx >= 0) { entries[idx].routed = true; Store.setProfile(pid, 'thoughts', entries); }
+  },
+};
+
+/* Expose new globals */
+window.School      = School;
+window.RewardStore = RewardStore;
+window.ThoughtJar  = ThoughtJar;
 window.Alerts       = Alerts;
 window.AppSetup     = AppSetup;
 window.isColorDark  = isColorDark;
